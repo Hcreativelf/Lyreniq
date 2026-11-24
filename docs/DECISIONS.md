@@ -93,6 +93,15 @@
 - 影响：本机路径写在忽略的 .local/cache-paths.json 和用户级 npm 配置，不作为其他机器的硬编码前置条件。其他 clone/CI 的 Vite/Vitest 缓存回落项目 .local/cache。项目源码、node_modules、构建产物和测试 profile 仍按用途管理。
 - 验证：Cargo 10,845、npm 62、旧 Vite/Vitest 21 个文件均逐一 SHA-256 相同；旧路径链接可用。npm cache verify、pnpm 实际设置、Vite/Vitest 新目录写入已核实；迁移后完整工程复验见 TESTING。
 
+## D013 — T04 展示状态、适配器与显式 Demo（2026-11-24）
+
+- 决策：用纯 TS 判别联合建立 idle/listening/no-pitch/low-confidence/detected/error 展示状态，只有 detected 包含音高；UI 从 AudioBackend 订阅展示数据，不计算 DSP 或音律转换。
+- 原因：T04 需要独立测试显示和状态，Rust 音律/DSP 属于后续任务。当前 TS 是展示契约，不声称已与尚不存在的 Rust IPC 对齐；T11 再建立契约测试和映射。
+- 来源：生产默认使用 unavailable 适配器，其 start 明确拒绝；用户主动进入 Demo 才创建独立模拟适配器。持续标识模拟来源，没有自动启用、定时假数据、音频输出或麦克风调用。
+- 生命周期：切换/退出/离页取消订阅并停止旧适配器，活动标志隔离迟到帧。状态非 detected 时不保留旧音高；非法/非有限值转为错误并清理。
+- 显示：±50 指针限幅与真实数值分开，±75 等读数不截断。默认容差 ±3 cents；音分/频率的小数位是显示精度，不是算法精度。置信度为指标而非真实概率。
+- 验证：新增 20 项 TS 测试后共 26 项；隐藏原生窗口检查两种主题/尺寸下 44 个 Demo 组合，并保留 T03 回归。首次 native 重试检查抢在 React 重新渲染前读取空状态，已增加明确的状态/焦点完成等待，保留原始断言；最终验收见 TESTING。
+
 ## 尚未决定
 
 - 项目许可证、正式分发应用标识、Windows 支持范围、安装包签名与分发策略。

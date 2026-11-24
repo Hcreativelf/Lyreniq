@@ -98,6 +98,8 @@ Playwright 连接真实 WebView2，监听按钮触发的 Rust IPC 响应并核�
 
 依据：[Tauri 窗口配置](https://v2.tauri.app/reference/config/)、[Playwright CDP 接口](https://playwright.dev/docs/api/class-browsertype#browser-type-connect-over-cdp)、[Microsoft WebView2 调试参数](https://learn.microsoft.com/en-us/microsoft-edge/webview2/concepts/webview-features-flags)。
 
+T04 复用上述工具链和缓存，没有新增依赖或系统组件。后台脚本进一步检查两主题/尺寸下的 44 个 Demo 组合、页面内 Home/方向键选择、重试、退出焦点恢复与导航清理；与 T03 的 16 个工作区组合分开记录。Demo 只展示固定 TS 数据，不使用设备权限，不等于真实音频采集、算法或精度测试。
+
 若系统 PowerShell profile 的 conda 启动报错，可使用 `pwsh -NoProfile`；本项目未改动用户 profile。
 
 ## 官方依据

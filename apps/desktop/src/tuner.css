@@ -1,0 +1,311 @@
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+.tuner-workspace {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: 10px;
+  min-height: 0;
+}
+.tuner-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 49px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--muted);
+  background: var(--surface);
+}
+.tuner-provenance {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.tuner-provenance p {
+  font-size: 10px;
+  line-height: 1.6;
+}
+.tuner-provenance strong {
+  display: block;
+  color: var(--accent-text);
+  font-size: 11px;
+  font-weight: 600;
+}
+.tuner-banner .button {
+  min-height: 30px;
+  padding: 6px 9px;
+  font-size: 11px;
+}
+.is-demo {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.demo-controls {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-shrink: 0;
+}
+.demo-controls select {
+  width: 170px;
+  min-height: 31px;
+  padding: 4px 7px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  color: var(--text);
+  font: inherit;
+  font-size: 11px;
+}
+.demo-controls select:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+}
+.tuner-panel {
+  flex: 1;
+  min-height: 310px;
+  display: flex;
+  flex-direction: column;
+  padding: 0 23px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.tuner-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 13px 0 2px;
+  font-size: 10px;
+  color: var(--subtle);
+}
+.tuner-meta b {
+  color: var(--muted);
+  font-weight: 400;
+  margin-left: 7px;
+  font-variant-numeric: tabular-nums;
+}
+.pitch-readout {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 150px 1fr;
+  align-items: center;
+  min-height: 111px;
+  gap: 12px;
+  padding: 5px 12px;
+}
+.readout-label {
+  display: block;
+  color: var(--subtle);
+  font-size: 10px;
+  margin-bottom: 6px;
+}
+.pitch-readout output {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.frequency-readout {
+  padding-left: 14px;
+}
+.frequency-readout output,
+.cents-readout output {
+  font-size: 30px;
+  font-weight: 500;
+  letter-spacing: -0.8px;
+}
+.pitch-readout small {
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--muted);
+}
+.note-readout {
+  text-align: center;
+}
+.note-readout .readout-label {
+  margin-bottom: 0;
+}
+.note-readout output {
+  display: block;
+  font-size: 83px;
+  font-weight: 500;
+  line-height: 1.12;
+  letter-spacing: -5px;
+}
+.note-octave {
+  font-size: 34px;
+  letter-spacing: 0;
+  margin-left: 3px;
+  color: var(--muted);
+}
+.cents-readout {
+  text-align: right;
+  padding-right: 14px;
+}
+.tuning-gauge {
+  display: block;
+  width: 100%;
+  max-width: 600px;
+  height: 66px;
+  margin: 0 auto;
+  flex-shrink: 0;
+  overflow: visible;
+}
+.gauge-center {
+  fill: var(--accent-soft);
+}
+.gauge-axis,
+.gauge-tick {
+  stroke: var(--border);
+  stroke-width: 1;
+}
+.gauge-tick.major {
+  stroke: var(--subtle);
+}
+.gauge-label {
+  fill: var(--subtle);
+  font:
+    10px "Segoe UI",
+    sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+.gauge-needle {
+  fill: var(--accent);
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+.signal-state {
+  position: relative;
+  text-align: center;
+  min-height: 49px;
+  padding-bottom: 10px;
+}
+.signal-state p {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.signal-state.tuned p {
+  color: var(--accent-text);
+}
+.signal-state.error p {
+  color: var(--error);
+}
+.signal-state > span {
+  display: block;
+  margin-top: 3px;
+  color: var(--subtle);
+  font-size: 10px;
+}
+.retry-demo {
+  position: absolute;
+  right: 0;
+  top: 0;
+  min-height: 27px;
+  padding: 5px 8px;
+  font-size: 10px;
+}
+.signal-metrics {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 24px;
+  border-top: 1px solid var(--border-soft);
+  padding: 12px 0 14px;
+}
+.metric-caption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  color: var(--subtle);
+  font-size: 10px;
+  margin-bottom: 7px;
+}
+.metric-caption output {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.tuner-meter,
+.empty-meter {
+  display: block;
+  width: 100%;
+  height: 5px;
+  border: 0;
+  border-radius: 3px;
+  background: var(--surface-raised);
+}
+.tuner-meter::-webkit-meter-bar {
+  height: 5px;
+  border: 0;
+  border-radius: 3px;
+  background: var(--surface-raised);
+}
+.tuner-meter::-webkit-meter-optimum-value {
+  background: var(--accent);
+  border-radius: 3px;
+}
+.tuner-meter::-moz-meter-bar {
+  background: var(--accent);
+  border-radius: 3px;
+}
+.has-error {
+  border-color: var(--error);
+}
+@media (min-width: 1280px) {
+  .tuner-panel {
+    padding: 0 35px;
+  }
+  .pitch-readout {
+    grid-template-columns: 1fr 240px 1fr;
+  }
+  .note-readout output {
+    font-size: 122px;
+  }
+  .note-octave {
+    font-size: 43px;
+  }
+  .frequency-readout output,
+  .cents-readout output {
+    font-size: 38px;
+  }
+  .tuning-gauge {
+    height: 86px;
+  }
+  .signal-state {
+    padding-bottom: 20px;
+  }
+  .signal-metrics {
+    padding-block: 20px;
+  }
+}
+@media (forced-colors: active) {
+  .gauge-needle {
+    fill: Highlight;
+    stroke: Highlight;
+  }
+  .gauge-axis,
+  .gauge-tick {
+    stroke: CanvasText;
+  }
+  .gauge-label {
+    fill: CanvasText;
+  }
+}

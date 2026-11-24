@@ -9,6 +9,7 @@ import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 import { chromium } from "playwright-core";
 import { verifyShell } from "./ui-shell-checks.mjs";
+import { verifyTuner } from "./ui-tuner-checks.mjs";
 
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
 const runDir = join(root, ".local", "ui-smoke", new Date().toISOString().replace(/[:.]/g, "-"));
@@ -99,6 +100,7 @@ let browser;
 let failure;
 let nativeWindowState = null;
 let shellResults = null;
+let tunerResults = null;
 const log = createWriteStream(join(runDir, "native.log"));
 try {
   const powershell = join(process.env.SystemRoot, "System32/WindowsPowerShell/v1.0/powershell.exe");
@@ -185,6 +187,7 @@ try {
   await assertBackground();
   record("reconnect button called Rust while window stayed hidden and unfocused");
   shellResults = await verifyShell({ page, runDir, record, assertBackground });
+  tunerResults = await verifyTuner({ page, runDir, record, assertBackground });
 
   await page
     .evaluate(() => window.__TAURI_INTERNALS__.invoke("plugin:window|close", { label: "main" }))
@@ -212,7 +215,7 @@ try {
   }
   await new Promise((resolve) => log.end(resolve));
   const result = {
-    task: "T03",
+    task: "T04",
     status: failure ? "failed" : "passed",
     checks,
     appVersion: pkg.version,
@@ -221,6 +224,7 @@ try {
     requestedWindowFocused: false,
     nativeWindowState,
     shell: shellResults,
+    tuner: tunerResults,
     resultDirectory: relative(root, runDir),
     screenshot: relative(root, screenshot),
     exit: exitResult ?? null,

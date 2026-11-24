@@ -11,6 +11,7 @@ import {
   Sun,
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { TunerWorkspace } from "./components/TunerWorkspace";
 import { Badge, Button } from "./components/ui";
 import { copy, type PageId, pages, type Theme } from "./content/zh-CN";
 import { readRuntimeLabel } from "./services/desktop";
@@ -185,6 +186,8 @@ export function App() {
               <Badge>{copy.unavailable}</Badge>
             </div>
           </section>
+        ) : page === "tuner" ? (
+          <TunerWorkspace />
         ) : (
           <section className="workspace-surface" aria-labelledby="empty-title">
             <div className="surface-label">

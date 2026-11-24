@@ -1,5 +1,32 @@
 # Lyreniq 验证记录
 
+## T04 调音显示与显式 Demo 验收（2026-11-24）
+
+起点：`3c6779919ff169f874d074baac3a7578673a8f76`（T03）。开始时工作区干净，fetch 后 ahead/behind=0/0；上轮 [Windows CI run 45387529930](https://github.com/Hcreativelf/Lyreniq/actions/runs/45387529930) 按 SHA 核实 success。先从 D:\ 复跑 check-env/bootstrap/test/build/test-ui，2 Rust + 6 TS、release 及 T03 全套后台 UI 均通过，随后实施 T04。
+
+最终仍从 D:\ 使用 `powershell.exe -NoProfile -File D:\2-workspace\Lyreniq\scripts\<名称>.ps1` 逐个调用，外层进程也退出 0。
+
+| 实际脚本/检查 | 结果 |
+|---|---|
+| check-env / bootstrap | 均 0；环境、pnpm frozen 安装、cargo fetch --locked 通过；集中缓存链接正常 |
+| test | 0；PS/MJS 解析、脚本/前端 Biome、Rust fmt/clippy、2 Rust IPC、类型及 26 项 TS 测试通过 |
+| build | 0；release exe 生成；Vite 2,144 模块，JS 247.49 kB / gzip 78.48 kB；不生成安装包 |
+| test-ui | 0；16 组检查通过，包含原有 16 工作区组合和新增 44 Demo 组合 |
+| 默认状态 | 无音高/频率/音分读数、无指针/信号数值；开始监听禁用；Demo 必须主动进入 |
+| 指针与数值 | -50/0/+50、±75 实际渲染；指针范围 ±50，±75 数字不截断，量程提示可见 |
+| 状态与音符 | A4→C4 替换；等待、静音、低置信度、错误、idle 清除旧音高；错误/idle 清除信号指标 |
+| 恢复和退出 | Demo 错误重试回到 A4；退出清空数据并聚焦入口；离页/返回不恢复旧 Demo |
+| 键盘与布局 | CDP Enter、Home/方向键选择、退出焦点；两主题 × 1024×700/1440×900 × 11 场景，无溢出或裁切控件；全程 hidden/unfocused |
+| 回归桥接/退出 | 真实 Rust runtime_label/重连 IPC、主题导航/焦点、18 组文字 token 对比度、正常退出 0 和端口释放均通过 |
+
+新增 20 项 TS 测试：10 项展示/状态/生命周期检查和 10 项适配器/非法值检查。包含旧适配器迟到帧被忽略、NaN/Infinity/非法目标/置信度/音名等导致错误清理。原有 6 项 T03 行为测试和 2 项 Rust 测试均保留。
+
+真实失败记录：最初项目外 Git 命令遗漏 -C，纠正目录后恢复检查通过，基线无故障。新增 Demo 夹具返回类型过宽导致 typecheck 失败，收窄 detected 判别类型后通过。首轮后台重试检查在 React 更新前读到临时空值而失败；改为等待明确的音名/状态/焦点完成条件，保留原断言，随后完整运行通过，不使用固定延时或放宽结果。
+
+最终原始运行：.local/ui-smoke/2026-11-24T13-33-29-937Z；[脱敏结果](evidence/T04/result.json)和 45 张 PNG 保存在 docs/evidence/T04。44 个 Demo 组合均验证布局与读数；1024×700 保存全部场景，两种大窗口主题另保存准确状态截图；部分大窗口场景只记录 DOM/布局断言，没有逐项截图。已直接查看默认、深浅准确/超量程及错误状态截图。
+
+本次 UI 音高数值全部来自标明来源的固定 Demo 夹具，真实 Rust 验证只针对已有只读 runtime_label；不把 Demo 称为麦克风采集、DSP 精度或音频设备测试。Windows 原生 DPI/标题栏、真实设备、生产离线、安装仍未验；125%/150% 继续只是渲染器模拟。云端 CI 只执行工程检查/release，实际结果在 push 后核实，由交付报告提供，下一轮回填。
+
 ## T03 工作区壳与主题验收（2026-11-24）
 
 起点：`1355bd94121e4bd8dec8b82e15dee765f8d4106e`（T02-b）。开始时工作区干净、fetch 后与 origin/main 一致；上轮 [Windows CI run 45345059150](https://github.com/Hcreativelf/Lyreniq/actions/runs/45345059150) 按 SHA 核实 success。先从 D:\ 运行 check-env/bootstrap/test/build/test-ui，原有 2 Rust + 3 TS、release 和 5 项隐藏原生 UI 检查均通过，随后才实施 T03。
