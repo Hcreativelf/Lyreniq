@@ -8,6 +8,7 @@ import { setTimeout as delay } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 import { chromium } from "playwright-core";
+import { verifyShell } from "./ui-shell-checks.mjs";
 
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
 const runDir = join(root, ".local", "ui-smoke", new Date().toISOString().replace(/[:.]/g, "-"));
@@ -83,6 +84,7 @@ const testConfig = {
             "core:window:allow-is-visible",
             "core:window:allow-is-focused",
             "core:window:allow-close",
+            "core:window:allow-set-size",
           ],
         },
       ],
@@ -96,6 +98,7 @@ let exitResult;
 let browser;
 let failure;
 let nativeWindowState = null;
+let shellResults = null;
 const log = createWriteStream(join(runDir, "native.log"));
 try {
   const powershell = join(process.env.SystemRoot, "System32/WindowsPowerShell/v1.0/powershell.exe");
@@ -144,7 +147,7 @@ try {
         .find((item) => item.url().startsWith(origin)),
     30_000,
   );
-  await page.getByRole("heading", { name: "Lyreniq", exact: true }).waitFor();
+  await page.getByRole("heading", { name: "实时调音", exact: true, level: 1 }).waitFor();
   await page.getByText(`Lyreniq ${pkg.version} · windows`, { exact: true }).waitFor();
   record("real Tauri page rendered and Rust runtime_label succeeded");
 
@@ -181,20 +184,7 @@ try {
   await page.getByText(`Lyreniq ${pkg.version} · windows`, { exact: true }).waitFor();
   await assertBackground();
   record("reconnect button called Rust while window stayed hidden and unfocused");
-  const layout = await page.evaluate(() => ({
-    width: innerWidth,
-    height: innerHeight,
-    scrollWidth: document.documentElement.scrollWidth,
-    scrollHeight: document.documentElement.scrollHeight,
-  }));
-  assert.ok(layout.width > 0 && layout.height > 0);
-  assert.ok(
-    layout.scrollWidth <= layout.width && layout.scrollHeight <= layout.height,
-    "Unexpected page overflow",
-  );
-  await page.screenshot({ path: screenshot, animations: "disabled", fullPage: true });
-  await assertBackground();
-  record(`renderer screenshot saved at ${layout.width}x${layout.height} with no overflow`);
+  shellResults = await verifyShell({ page, runDir, record, assertBackground });
 
   await page
     .evaluate(() => window.__TAURI_INTERNALS__.invoke("plugin:window|close", { label: "main" }))
@@ -222,7 +212,7 @@ try {
   }
   await new Promise((resolve) => log.end(resolve));
   const result = {
-    task: "T02-b",
+    task: "T03",
     status: failure ? "failed" : "passed",
     checks,
     appVersion: pkg.version,
@@ -230,6 +220,7 @@ try {
     requestedWindowVisible: false,
     requestedWindowFocused: false,
     nativeWindowState,
+    shell: shellResults,
     resultDirectory: relative(root, runDir),
     screenshot: relative(root, screenshot),
     exit: exitResult ?? null,

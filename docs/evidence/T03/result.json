@@ -1,0 +1,382 @@
+{
+  "task": "T03",
+  "status": "passed",
+  "checks": [
+    "real Tauri page rendered and Rust runtime_label succeeded",
+    "native window reports hidden and unfocused",
+    "reconnect button called Rust while window stayed hidden and unfocused",
+    "dark 1024x700: all four native workspaces fit; actions stay unavailable",
+    "light 1024x700: all four native workspaces fit; actions stay unavailable",
+    "dark 1440x900: all four native workspaces fit; actions stay unavailable",
+    "light 1440x900: all four native workspaces fit; actions stay unavailable",
+    "CDP keyboard: skip link, Tab/Enter navigation, heading focus, Space theme selection and visible focus ring",
+    "both themes: primary, muted and secondary text tokens meet 4.5:1 on workspace surfaces",
+    "renderer-only 125%/150% scale checks fit at logical 1024x700; Windows display settings unchanged",
+    "native window closed normally; dev script exited 0 and both ports were released"
+  ],
+  "appVersion": "0.1.0",
+  "mode": "hidden native Tauri/WebView2 over loopback CDP",
+  "requestedWindowVisible": false,
+  "requestedWindowFocused": false,
+  "nativeWindowState": {
+    "visible": false,
+    "focused": false
+  },
+  "shell": {
+    "matrix": [
+      {
+        "workspace": "tuner",
+        "theme": "dark",
+        "width": 1024,
+        "height": 700,
+        "devicePixelRatio": 1,
+        "scrollWidth": 1024,
+        "scrollHeight": 700,
+        "mainOverflow": false,
+        "clippedControls": 0,
+        "screenshot": "dark-1024x700-tuner.png"
+      },
+      {
+        "workspace": "files",
+        "theme": "dark",
+        "width": 1024,
+        "height": 700,
+        "devicePixelRatio": 1,
+        "scrollWidth": 1024,
+        "scrollHeight": 700,
+        "mainOverflow": false,
+        "clippedControls": 0,
+        "screenshot": "dark-1024x700-files.png"
+      },
+      {
+        "workspace": "tone",
+        "theme": "dark",
+        "width": 1024,
+        "height": 700,
+        "devicePixelRatio": 1,
+        "scrollWidth": 1024,
+        "scrollHeight": 700,
+        "mainOverflow": false,
+        "clippedControls": 0,
+        "screenshot": "dark-1024x700-tone.png"
+      },
+      {
+        "workspace": "settings",
+        "theme": "dark",
+        "width": 1024,
+        "height": 700,
+        "devicePixelRatio": 1,
+        "scrollWidth": 1024,
+        "scrollHeight": 700,
+        "mainOverflow": false,
+        "clippedControls": 0,
+        "screenshot": "dark-1024x700-settings.png"
+      },
+      {
+        "workspace": "tuner",
+        "theme": "light",
+        "width": 1024,
+        "height": 700,
+        "devicePixelRatio": 1,
+        "scrollWidth": 1024,
+        "scrollHeight": 700,
+        "mainOverflow": false,
+        "clippedControls": 0,
+        "screenshot": "light-1024x700-tuner.png"
+      },
+      {
+        "workspace": "files",
+        "theme": "light",
+        "width": 1024,
+        "height": 700,
+        "devicePixelRatio": 1,
+        "scrollWidth": 1024,
+        "scrollHeight": 700,
+        "mainOverflow": false,
+        "clippedControls": 0,
+        "screenshot": "light-1024x700-files.png"
+      },
+      {
+        "workspace": "tone",
+        "theme": "light",
+        "width": 1024,
+        "height": 700,
+        "devicePixelRatio": 1,
+        "scrollWidth": 1024,
+        "scrollHeight": 700,
+        "mainOverflow": false,
+        "clippedControls": 0,
+        "screenshot": "light-1024x700-tone.png"
+      },
+      {
+        "workspace": "settings",
+        "theme": "light",
+        "width": 1024,
+        "height": 700,
+        "devicePixelRatio": 1,
+        "scrollWidth": 1024,
+        "scrollHeight": 700,
+        "mainOverflow": false,
+        "clippedControls": 0,
+        "screenshot": "light-1024x700-settings.png"
+      },
+      {
+        "workspace": "tuner",
+        "theme": "dark",
+        "width": 1440,
+        "height": 900,
+        "devicePixelRatio": 1,
+        "scrollWidth": 1440,
+        "scrollHeight": 900,
+        "mainOverflow": false,
+        "clippedControls": 0,
+        "screenshot": "dark-1440x900-tuner.png"
+      },
+      {
+        "workspace": "files",
+        "theme": "dark",
+        "width": 1440,
+        "height": 900,
+        "devicePixelRatio": 1,
+        "scrollWidth": 1440,
+        "scrollHeight": 900,
+        "mainOverflow": false,
+        "clippedControls": 0,
+        "screenshot": "dark-1440x900-files.png"
+      },
+      {
+        "workspace": "tone",
+        "theme": "dark",
+        "width": 1440,
+        "height": 900,
+        "devicePixelRatio": 1,
+        "scrollWidth": 1440,
+        "scrollHeight": 900,
+        "mainOverflow": false,
+        "clippedControls": 0,
+        "screenshot": "dark-1440x900-tone.png"
+      },
+      {
+        "workspace": "settings",
+        "theme": "dark",
+        "width": 1440,
+        "height": 900,
+        "devicePixelRatio": 1,
+        "scrollWidth": 1440,
+        "scrollHeight": 900,
+        "mainOverflow": false,
+        "clippedControls": 0,
+        "screenshot": "dark-1440x900-settings.png"
+      },
+      {
+        "workspace": "tuner",
+        "theme": "light",
+        "width": 1440,
+        "height": 900,
+        "devicePixelRatio": 1,
+        "scrollWidth": 1440,
+        "scrollHeight": 900,
+        "mainOverflow": false,
+        "clippedControls": 0,
+        "screenshot": "light-1440x900-tuner.png"
+      },
+      {
+        "workspace": "files",
+        "theme": "light",
+        "width": 1440,
+        "height": 900,
+        "devicePixelRatio": 1,
+        "scrollWidth": 1440,
+        "scrollHeight": 900,
+        "mainOverflow": false,
+        "clippedControls": 0,
+        "screenshot": "light-1440x900-files.png"
+      },
+      {
+        "workspace": "tone",
+        "theme": "light",
+        "width": 1440,
+        "height": 900,
+        "devicePixelRatio": 1,
+        "scrollWidth": 1440,
+        "scrollHeight": 900,
+        "mainOverflow": false,
+        "clippedControls": 0,
+        "screenshot": "light-1440x900-tone.png"
+      },
+      {
+        "workspace": "settings",
+        "theme": "light",
+        "width": 1440,
+        "height": 900,
+        "devicePixelRatio": 1,
+        "scrollWidth": 1440,
+        "scrollHeight": 900,
+        "mainOverflow": false,
+        "clippedControls": 0,
+        "screenshot": "light-1440x900-settings.png"
+      }
+    ],
+    "captures": [
+      "dark-1024x700-tuner.png",
+      "dark-1024x700-files.png",
+      "dark-1024x700-tone.png",
+      "dark-1024x700-settings.png",
+      "light-1024x700-tuner.png",
+      "light-1024x700-files.png",
+      "light-1024x700-tone.png",
+      "light-1024x700-settings.png",
+      "dark-1440x900-tuner.png",
+      "dark-1440x900-files.png",
+      "dark-1440x900-tone.png",
+      "dark-1440x900-settings.png",
+      "light-1440x900-tuner.png",
+      "light-1440x900-files.png",
+      "light-1440x900-tone.png",
+      "light-1440x900-settings.png",
+      "keyboard-focus.png",
+      "renderer-scale-1.25.png",
+      "renderer-scale-1.5.png"
+    ],
+    "keyboardFocus": {
+      "focused": true,
+      "visible": true,
+      "width": "2px",
+      "style": "solid"
+    },
+    "contrast": [
+      {
+        "theme": "dark",
+        "samples": [
+          {
+            "foreground": "--text",
+            "background": "--bg",
+            "ratio": 15.249423427250495
+          },
+          {
+            "foreground": "--text",
+            "background": "--surface",
+            "ratio": 14.319556337672392
+          },
+          {
+            "foreground": "--text",
+            "background": "--sidebar",
+            "ratio": 15.988125729557556
+          },
+          {
+            "foreground": "--muted",
+            "background": "--bg",
+            "ratio": 7.660051174206052
+          },
+          {
+            "foreground": "--muted",
+            "background": "--surface",
+            "ratio": 7.1929627281832405
+          },
+          {
+            "foreground": "--muted",
+            "background": "--sidebar",
+            "ratio": 8.031114215715169
+          },
+          {
+            "foreground": "--subtle",
+            "background": "--bg",
+            "ratio": 5.6377379231294835
+          },
+          {
+            "foreground": "--subtle",
+            "background": "--surface",
+            "ratio": 5.293964469700647
+          },
+          {
+            "foreground": "--subtle",
+            "background": "--sidebar",
+            "ratio": 5.910837427742719
+          }
+        ]
+      },
+      {
+        "theme": "light",
+        "samples": [
+          {
+            "foreground": "--text",
+            "background": "--bg",
+            "ratio": 13.341983994512916
+          },
+          {
+            "foreground": "--text",
+            "background": "--surface",
+            "ratio": 14.298055652045932
+          },
+          {
+            "foreground": "--text",
+            "background": "--sidebar",
+            "ratio": 12.619491444870983
+          },
+          {
+            "foreground": "--muted",
+            "background": "--bg",
+            "ratio": 5.619664751174271
+          },
+          {
+            "foreground": "--muted",
+            "background": "--surface",
+            "ratio": 6.022363644805433
+          },
+          {
+            "foreground": "--muted",
+            "background": "--sidebar",
+            "ratio": 5.315349747058045
+          },
+          {
+            "foreground": "--subtle",
+            "background": "--bg",
+            "ratio": 5.126239543819015
+          },
+          {
+            "foreground": "--subtle",
+            "background": "--surface",
+            "ratio": 5.493580138709996
+          },
+          {
+            "foreground": "--subtle",
+            "background": "--sidebar",
+            "ratio": 4.848644406573137
+          }
+        ]
+      }
+    ],
+    "scaling": [
+      {
+        "width": 1024,
+        "height": 700,
+        "devicePixelRatio": 1.25,
+        "overflow": false,
+        "screenshot": "renderer-scale-1.25.png",
+        "mode": "CDP renderer emulation, not Windows display settings"
+      },
+      {
+        "width": 1024,
+        "height": 700,
+        "devicePixelRatio": 1.5,
+        "overflow": false,
+        "screenshot": "renderer-scale-1.5.png",
+        "mode": "CDP renderer emulation, not Windows display settings"
+      }
+    ]
+  },
+  "screenshot": "native-window.png",
+  "exit": {
+    "code": 0,
+    "signal": null
+  },
+  "error": null,
+  "unverified": [
+    "native titlebar interaction",
+    "DPI/display scaling matrix",
+    "audio devices"
+  ],
+  "date": "2026-11-24",
+  "timezone": "Asia/Shanghai",
+  "command": "powershell.exe -NoProfile -File D:\\2-workspace\\Lyreniq\\scripts\\test-ui.ps1 (cwd D:\\)"
+}

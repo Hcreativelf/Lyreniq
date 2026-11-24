@@ -78,6 +78,21 @@
 - 验证：PowerShell 7/5.1（含项目目录外）后台 smoke 通过，真实按钮 IPC 响应核对、1000x700 渲染截图、native is_visible/is_focused=false、退出 0/端口释放均有证据。因此 T02-b 和父任务 T02 的工程 smoke 验收完成。
 - 范围：标题栏实体点击、DPI 矩阵、系统弹窗、音频设备留在相应后续任务；后台原生 UI 测试当前未纳入云端 CI。T02-a 的 Windows CI 已实际成功，记录见 TESTING。
 
+## D011 — T03 工作区、主题与本地图标（2026-11-24）
+
+- 决策：采用原创石墨灰/暖白/薄荷绿 token、原生语义按钮与四个工作区空壳；默认深色，主题仅本次会话保留。底部真实桌面连接保持独立，不把桥接成功写成音频已连接。
+- 原因：T03 先确立信息层级、可访问导航和一致控件；调音显示与 Demo 属于 T04，音频功能在后续任务。当前未开放动作明确禁用，没有假测量值。
+- 参考与替代：核实 shadcn/ui MIT、Audacity 整体 GPLv3/部分文件其他许可、Lucide ISC/Feather MIT 及发布/活动情况，具体版本与采用方式见 UI_GUIDE。用原生 HTML + 自有 CSS，未引入 shadcn/Radix 的无关依赖，也未复制 GPL 代码/资产。
+- 图标：lucide-react 精确锁定 1.75.0，保留完整许可。安装今日最新版本曾自动添加发布时间豁免，已改用 11-18 发布版本并移除该豁免，最终没有放宽 pnpm 发布策略。
+- 验证：两种实际原生窗口尺寸、两主题四页面的 16 组合均通过；CDP 键盘/焦点、真实 IPC、关闭与端口释放通过。浅色次要文字首次 4.45:1 未达标，调深后 18 组文字组合最低约 4.85:1。原生 DPI 切换仍未执行，渲染器比例模拟单列。
+
+## D012 — 本机可迁移缓存集中管理（2026-11-24）
+
+- 决策：按用户新增持久偏好，将 npm、Cargo registry、Vite/Vitest 等当前发现的可重建缓存集中到 D:\4-stuff\Cache；pnpm 复用用户先前配置和项目兼容链接。该设置只针对当前电脑。
+- 原因：原生 Vite cacheDir/npm cache 适合直接配置；整体 CARGO_HOME 混合程序、配置与凭据，所以只迁移有 CACHEDIR.TAG、官方确认为缓存的 registry 并保留兼容 junction。
+- 影响：本机路径写在忽略的 .local/cache-paths.json 和用户级 npm 配置，不作为其他机器的硬编码前置条件。其他 clone/CI 的 Vite/Vitest 缓存回落项目 .local/cache。项目源码、node_modules、构建产物和测试 profile 仍按用途管理。
+- 验证：Cargo 10,845、npm 62、旧 Vite/Vitest 21 个文件均逐一 SHA-256 相同；旧路径链接可用。npm cache verify、pnpm 实际设置、Vite/Vitest 新目录写入已核实；迁移后完整工程复验见 TESTING。
+
 ## 尚未决定
 
 - 项目许可证、正式分发应用标识、Windows 支持范围、安装包签名与分发策略。

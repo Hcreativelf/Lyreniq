@@ -20,6 +20,7 @@
 | Testing Library React / user-event | 16.3.3 / 14.6.13 | T02 连接状态与用户重试测试 |
 | jest-dom / jsdom | 7.0.1 / 27.4.0 | 与 Vitest 4 相容的 matcher 和 DOM 环境 |
 | playwright-core | 1.65.1 | 后台直连已有 WebView2，不下载浏览器 |
+| lucide-react | 1.75.0 | T03 本地图标；React 19 peer 相容；ISC/Feather MIT 声明见 docs/licenses |
 
 本机注册表报告 ProductName=Windows 10 Pro、DisplayVersion=26H2、build=26300.9974，架构 AMD64。仅以这台 Windows x64 机器为当前验证环境，不据此声称已覆盖所有 Windows 10/11 版本。
 
@@ -27,7 +28,29 @@
 
 用户已授权安装 T01 必需组件，并允许公共环境共享安装。Rust 在标准用户目录 `.cargo`/`.rustup`，pnpm 在标准 npm 用户级目录，MSVC/SDK 在标准系统目录；不强制迁移已有全局工具链。
 
-项目保留全部版本约束、两份依赖锁文件和 `.vsconfig` 组件清单。pnpm store 位于 `.local/pnpm-store`；node_modules、target、dist、Tauri 生成 schema 和 .local 均不提交。
+项目保留全部版本约束、两份依赖锁文件和 `.vsconfig` 组件清单。pnpm 项目逻辑路径为 `.local/pnpm-store`，本机通过 junction 集中到 D 盘缓存目录，见下节；node_modules、target、dist、Tauri 生成 schema 和 .local 均不提交。
+
+## 本机集中缓存（2026-11-24）
+
+用户持久偏好：当前 Windows 电脑的可迁移缓存集中到 D:\4-stuff\Cache。该路径不是账号云端记忆，不在没有此 D 盘的其他电脑照搬。项目配置、依赖安装目录、构建产物、日志、测试 profile、源码和凭据仍按用途存放。
+
+| 工具 | 当前实际缓存位置 | 配置/兼容方式及验证 |
+|---|---|---|
+| pnpm 全局 store | D:\4-stuff\Cache\pnpm\store | 项目外 pnpm config get store-dir 已核实 |
+| pnpm 其他缓存 | D:\4-stuff\Cache\pnpm\cache | pnpm config get cache-dir 已核实 |
+| Lyreniq pnpm store | D:\4-stuff\Cache\pnpm\projects\Lyreniq | 原 .local/pnpm-store 为 junction；保留项目相对 storeDir；frozen 安装通过 |
+| npm | D:\4-stuff\Cache\npm\cache | npm 用户级原生 cache 配置；cache verify 实际写入新路径；旧 %LOCALAPPDATA%/npm-cache 保留 junction |
+| Cargo registry | D:\4-stuff\Cache\cargo\registry | %USERPROFILE%/.cargo/registry 保留 junction；核实官方目录用途与 CACHEDIR.TAG；10,845 个文件逐一 SHA-256 相同 |
+| Vite | D:\4-stuff\Cache\vite\Lyreniq | 原生 cacheDir；真实后台启动后 deps 实际生成 |
+| Vitest | D:\4-stuff\Cache\vitest\Lyreniq | 原生 cacheDir；测试后 vitest 缓存实际生成 |
+
+npm 旧缓存的 62 个文件已逐一 SHA-256 核实后迁移；原 node_modules/.vite 内的 21 个旧缓存文件迁到 Vite 目录的 legacy-node_modules-vite 子目录并保留 junction，哈希一致。机器迁移日志保留在 .local/logs/T03-cache-migration.jsonl 等本地日志，不提交。
+
+Vite/Vitest 通过忽略的 `.local/cache-paths.json` 读取 `{ "cacheRoot": "D:/4-stuff/Cache" }`，也支持进程环境变量 LYRENIQ_CACHE_ROOT；由 cache-paths.ts 传给官方 cacheDir。没有本机配置的 clone/CI 自动使用项目 .local/cache/vite 与 .local/cache/vitest。机器专属路径没有写入共享 Vite 配置。
+
+Cargo 官方支持整体 CARGO_HOME，但其中同时包含程序、配置和凭据；本轮只迁移确认属于缓存的 registry，保留其他内容的位置。registry 内部结构不是稳定 API，升级 Cargo 后需复核 junction 与缓存行为。Rustup 工具链不是缓存，未归入缓存目录；未来安装工具链时再检查其下载缓存。Vite 的临时配置加载文件不属于此 cacheDir 控制范围，不将整个 node_modules 迁移为缓存。
+
+依据：[npm cache 配置](https://docs.npmjs.com/cli/v11/using-npm/config/#cache)、[pnpm 配置](https://pnpm.io/settings)、[Vite cacheDir](https://vite.dev/config/shared-options.html#cachedir)、[Cargo Home 目录说明](https://doc.rust-lang.org/cargo/guide/cargo-home.html)。
 
 安装器保存在 `.local/downloads`（忽略）。Rustup 来自 Rust 官方，并与官方 SHA-256 文件核对，哈希为 `38027D51D69A5D05493627A0634DBEA52D6CD793C8F072D2373D3F4163EEC7DB`。Build Tools 安装器来自 Microsoft 官方，运行前 Authenticode 状态为 Valid、签名主体 Microsoft Corporation。
 
@@ -71,7 +94,7 @@ Windows CI 使用 windows-2022、固定提交的官方 checkout/setup-node、项
 
 Playwright 连接真实 WebView2，监听按钮触发的 Rust IPC 响应并核对返回值；直接从渲染器截取页面，而非抓取用户桌面。正常关闭使用仅对测试实例授权的窗口 close 命令，并核对 dev 进程退出 0、Vite/CDP 端口释放。失败时只终止该测试自己创建的进程树。
 
-结果及独立 profile 留在 .local/ui-smoke，每轮结果汇总到 latest.json；适用的脱敏截图和结果可复制到 docs/evidence。当前已测 1000x700 页面，不能据此声称已验证标题栏实体点击、其他 DPI/分辨率、设备权限或完整生产离线行为。GitHub CI 当前不运行这项原生 UI 测试。
+结果及独立 profile 留在 .local/ui-smoke，每轮结果汇总到 latest.json；脱敏截图和结果可复制到 docs/evidence。T03 已扩展到原生 1024×700/1440×900、两主题四页面的 16 组合，以及页面内键盘/焦点、文字 token 对比度和 CDP 渲染比例 125%/150%。比例模拟不等于 Windows 原生 DPI 切换；标题栏实体点击、跨屏 DPI、设备权限或完整生产离线行为仍未验证。GitHub CI 当前不运行这项原生 UI 测试。
 
 依据：[Tauri 窗口配置](https://v2.tauri.app/reference/config/)、[Playwright CDP 接口](https://playwright.dev/docs/api/class-browsertype#browser-type-connect-over-cdp)、[Microsoft WebView2 调试参数](https://learn.microsoft.com/en-us/microsoft-edge/webview2/concepts/webview-features-flags)。
 

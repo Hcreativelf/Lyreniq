@@ -1,5 +1,32 @@
 # Lyreniq 验证记录
 
+## T03 工作区壳与主题验收（2026-11-24）
+
+起点：`1355bd94121e4bd8dec8b82e15dee765f8d4106e`（T02-b）。开始时工作区干净、fetch 后与 origin/main 一致；上轮 [Windows CI run 45345059150](https://github.com/Hcreativelf/Lyreniq/actions/runs/45345059150) 按 SHA 核实 success。先从 D:\ 运行 check-env/bootstrap/test/build/test-ui，原有 2 Rust + 3 TS、release 和 5 项隐藏原生 UI 检查均通过，随后才实施 T03。
+
+| 实际命令/检查 | 结果 |
+|---|---|
+| PowerShell 7 前端 typecheck/test、Biome | 退出 0；最终 6 项 TS 测试通过，保留原有 3 项连接行为回归 |
+| 在 D:\ 调用 powershell.exe -NoProfile -File D:\2-workspace\Lyreniq\scripts\check-env.ps1 | 退出 0；版本、MSVC、SDK、WebView2 通过 |
+| 同上调用 bootstrap.ps1 | 退出 0；pnpm frozen 安装、cargo fetch --locked 通过；迁移后的缓存链接可用 |
+| 同上调用 test.ps1 | 退出 0；PS/MJS 解析、脚本/前端 Biome、Rust fmt/clippy、2 Rust IPC、类型及 6 TS 测试通过 |
+| 同上调用 build.ps1 | 退出 0；release exe 生成；Vite 2,139 模块，JS 237.58 kB / gzip 74.95 kB；安装包明确留给 T24 |
+| 同上调用 test-ui.ps1 | 退出 0；11 组检查全部通过，包含 16 个原生窗口/主题/页面组合 |
+| 原生窗口矩阵 | 真正 set_size 到 1024×700、1440×900；深浅主题 × 实时调音/文件分析/参考音/设置；无文档/主体溢出、可操作控件不裁切、未开放动作禁用 |
+| 真实桥接与退出 | Rust runtime_label 返回值、按钮 POST IPC 200/ok/返回值、hidden/unfocused、正常关闭退出 0 与端口释放通过 |
+| 键盘与焦点 | 页面级 CDP Tab、Enter、Space；跳转链接、导航、页面 h1 聚焦、主题选择和 2px 可见焦点实测通过；没有系统键盘注入 |
+| 文字对比度 | 18 组 token/表面组合全部 ≥4.5:1，最低 4.8486:1 |
+| 125%/150% | CDP 设备比例模拟，在逻辑 1024×700 无溢出；与原生窗口矩阵分开，不等于 Windows DPI 切换验收 |
+| 缓存迁移 | Cargo 10,845、npm 62、旧 Vite/Vitest 21 个文件逐一 SHA-256 一致；兼容 junction、官方配置及实际新路径写入核实；之后完整回归退出 0 |
+
+新增 3 项行为测试覆盖四页面导航及焦点、两处主题控件同步/跨导航保持、键盘入口与无虚构测量值。首次 lint 检出分组/列表语义问题，已改用 fieldset/ul；新增测试一度使用 Testing Library 不支持的 exact 参数，已修正为其默认精确名称匹配。首次完整 UI 检查发现浅色次要文字 4.45:1，实际失败记录保留；调深后两次完整后台测试通过。没有关闭规则、放宽对比度或跳过断言。
+
+最终原始 UI 运行：.local/ui-smoke/2026-11-24T11-37-34-367Z；[脱敏结果](evidence/T03/result.json)及全部 20 张 PNG 保存在 docs/evidence/T03。已直接查看两种尺寸/主题、设置页及键盘焦点的实际截图。例：[深色 1024×700](evidence/T03/dark-1024x700-tuner.png)、[浅色 1440×900](evidence/T03/light-1440x900-tuner.png)、[设置](evidence/T03/light-1024x700-settings.png)、[键盘焦点](evidence/T03/keyboard-focus.png)。
+
+最终日志位于 .local/logs/bootstrap.log、test.log、build.log、ui-smoke.log、dev-ui-smoke.log；缓存验证与开源参考快照同在 .local/logs，不提交机器数据。check-env 输出由本次工具执行记录保存，该脚本不生成单独日志文件。
+
+T03 本地验收通过。本轮 CI 实际结果在 push 后按 SHA 核实，由最终报告给出并在下一轮回填。CI 执行工程检查/release，不执行本机隐藏 GUI。未执行：Windows 原生 DPI/跨屏切换、标题栏实体交互、音频设备、生产断网、安装包及完整调音功能验收。
+
 ## T02-b 后台原生 UI 验收（2026-11-24）
 
 起点：`def1765d43745d9b310fbeba511ff257ee140f9a`（T02-a）。开始时工作区干净、远端一致；先复跑 check-env/bootstrap/test/build。上轮 [Windows checks run 45338108012](https://github.com/Hcreativelf/Lyreniq/actions/runs/45338108012) 的实际 conclusion=success，工程检查与 release 构建全部通过。
