@@ -55,6 +55,21 @@
 - 影响：应用标识暂用 com.lyreniq.desktop（开发标识，不表示拥有该域名）；bundle 暂关闭，签名/分发标识在发布任务复核。图标来自本仓库自有 L 字 SVG，由 Tauri CLI 生成 Windows ICO/PNG；不是最终品牌设计。
 - 验证：构建和原生 IPC smoke test 见 TESTING；其他平台、音频、UI 设计系统、安装包均未实现。
 
+## D008 — T02 自动化与 Windows 测试清单（2026-11-24）
+
+- 决策：项目内统一脚本兼容 PowerShell 7/Windows PowerShell 5.1，明确检查工具而不自动安装系统组件；bootstrap 冻结两份锁文件，其他脚本传递失败退出码并记录本地日志。
+- 原因：T01 的 Codex 内置 pnpm/Node 差异和从任意目录恢复需求需要统一入口。新增 Biome recommended 规则、Vitest 连接状态测试和 Tauri mock IPC 注册/拒绝测试；不增加产品功能。
+- Windows 修复：Rust 测试首次返回 0xc0000139；dumpbin 确认引用 Common Controls v6 API，与 [Tauri 官方问题 #13419](https://github.com/tauri-apps/tauri/issues/13419) 相符。最终将 manifest 作为单一项目文件，为应用及测试链接，移除重复的默认 manifest，避免重复资源错误；不依赖内部 __TAURI_WORKSPACE__ 环境变量或关闭测试。
+- 验证：2 项真实 mock IPC 测试、3 项前端行为测试、fmt/clippy/lint/typecheck 在两种 PowerShell 下通过；最终 release exe 构建通过。模拟原生命令 exit 7 被正确识别为失败。
+- CI：官方 Actions 使用经 ls-remote 核实的固定提交，权限 contents:read，Windows runner 使用同样脚本；实际 CI 结果在 push 后核实。
+
+## D009 — T02 分成可独立验收的两部分（2026-11-24）
+
+- 决策：T02-a 交付环境脚本、自动化测试、release 构建与 Windows CI 基线；T02-b 完成最终统一 dev 脚本的真实原生窗口/IPC、按钮和退出复验。T02 父任务保持 IN_PROGRESS，唯一下一任务为 T02-b。
+- 原因：T01 恢复窗口已实测通过；在 T02 实施后的最终窗口复验时，computer-use 报告物理 Esc 停止。遵守停止桌面控制，继续保存和验证不依赖 UI 的已授权工作；不把窗口未验写成通过。
+- 影响：T02-a 是已通过本地验收的独立工程基线，可独立提交/推送并核实 CI；T02-b 完成前不进入 T03。不以 mock 测试代替真实 GUI。
+- 验证：自动化结果见 TESTING；T02-b 的 GUI 证据待补齐。
+
 ## 尚未决定
 
 - 项目许可证、正式分发应用标识、Windows 支持范围、安装包签名与分发策略。

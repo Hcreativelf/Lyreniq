@@ -24,11 +24,17 @@ export function App() {
 
   return (
     <main className="window-check">
-      <div className="mark" aria-hidden="true">L</div>
+      <div className="mark" aria-hidden="true">
+        L
+      </div>
       <p className="eyebrow">UNIVERSAL TUNER · 工程初始化</p>
       <h1>Lyreniq</h1>
       <p className="intro">Windows 桌面最小窗口</p>
-      <section className="connection" aria-live="polite" aria-busy={connection.state === "checking"}>
+      <section
+        className="connection"
+        aria-live="polite"
+        aria-busy={connection.state === "checking"}
+      >
         {connection.state === "checking" && <p>正在验证桌面连接…</p>}
         {connection.state === "connected" && (
           <>
@@ -40,7 +46,11 @@ export function App() {
           <p>无法连接桌面后端。请通过项目根目录的 pnpm dev 启动原生窗口。</p>
         )}
       </section>
-      <button type="button" onClick={() => void verifyConnection()} disabled={connection.state === "checking"}>
+      <button
+        type="button"
+        onClick={() => void verifyConnection()}
+        disabled={connection.state === "checking"}
+      >
         重新验证桌面连接
       </button>
       <p className="scope">当前仅验证工程启动；调音与音频功能尚未实现。</p>

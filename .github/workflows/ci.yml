@@ -1,0 +1,48 @@
+name: Windows checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: windows-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-and-build:
+    runs-on: windows-2022
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version-file: .node-version
+          package-manager-cache: false
+      - name: Install pinned build tools
+        run: |
+          $package = Get-Content package.json -Raw | ConvertFrom-Json
+          npm install --global --prefix "$env:APPDATA/npm" $package.packageManager
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $toolchain = [regex]::Match((Get-Content rust-toolchain.toml -Raw), '(?m)^channel\s*=\s*"([0-9.]+)"').Groups[1].Value
+          rustup toolchain install $toolchain --profile minimal --component rustfmt,clippy
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Check environment from outside the repository
+        working-directory: ${{ runner.temp }}
+        run: '& "$env:GITHUB_WORKSPACE/scripts/check-env.ps1" -SkipWebView2'
+      - name: Install locked dependencies
+        run: ./scripts/bootstrap.ps1 -SkipWebView2
+      - name: Check formatting, lint, types and tests
+        run: ./scripts/test.ps1 -SkipWebView2
+      - name: Build Windows release executable
+        run: ./scripts/build.ps1 -SkipWebView2

@@ -2,7 +2,7 @@
 
 Lyreniq 是 Universal Tuner 通用乐器调音与音准分析项目的软件名称。目标是提供现代、专业的本地调音工具；首个交付平台为 Windows 桌面。
 
-当前已通过 T01 的 Windows Tauri + React 最小窗口验收；真实 Rust 桥接和重新连接按钮已验证，调音功能和安装包尚未实现。
+当前已通过 T01 的 Windows Tauri + React 最小窗口验收；T02-a 已建立脚本、自动化测试与 release 构建基线，T02-b 的最终原生窗口复验待完成。调音功能和安装包尚未实现。
 
 ## 项目入口
 
@@ -34,15 +34,18 @@ Lyreniq 是 Universal Tuner 通用乐器调音与音准分析项目的软件名�
 安装共享工具链并核对 [环境基线](docs/ENVIRONMENT.md) 后，在项目根目录运行：
 
 ```powershell
-pnpm install --frozen-lockfile
-cargo check --workspace --locked
-pnpm build
-pnpm dev
+pwsh -NoProfile -File scripts/check-env.ps1
+pwsh -NoProfile -File scripts/bootstrap.ps1
+pwsh -NoProfile -File scripts/test.ps1
+pwsh -NoProfile -File scripts/build.ps1
+pwsh -NoProfile -File scripts/dev.ps1
 ```
 
-`pnpm build` 当前构建前端；`pnpm dev` 启动真实 Tauri 原生窗口及本机 Vite 开发服务器。原生窗口显示 Rust 返回的版本/平台信息，可点击重新验证连接；普通浏览器预览不具备桌面后端。
+也支持 `powershell.exe -NoProfile -File scripts/<名称>.ps1`（Windows PowerShell 5.1）。脚本从自身位置推导项目根目录，可在其他工作目录用绝对脚本路径调用。check-env 只检查；bootstrap 使用锁文件下载项目依赖；test 执行 PowerShell 解析、Rust fmt/clippy/test 和前端 lint/typecheck/test；build 生成 `target/release/lyreniq-desktop.exe`，当前明确跳过安装包；dev 启动原生窗口及本机 Vite。
 
-统一 PowerShell 脚本、自动化测试及 CI 在 T02 建立，当前尚不存在。Tauri bundle 暂未启用；T01 不生成或发布安装包。UI 设计系统从 T03 开始。
+日志保存在 `.local/logs`，不提交。首次 bootstrap 需要网络；工具链缺失由检查报告，不静默安装系统组件。CI 在 Windows runner 上执行同一套脚本；`-SkipWebView2` 仅供无 GUI 的构建/CI，明确跳过运行时检查，不能代替原生窗口验收。CI 实际结果见 TESTING/交付报告。
+
+低层命令仍可使用：`pnpm build` 构建前端，`pnpm dev` 启动桌面，`pnpm test` 仅跑前端测试；完整回归使用 scripts/test.ps1。原生窗口显示真实 Rust 版本/平台信息，可重新验证连接；普通浏览器预览没有桌面后端。UI 设计系统从 T03 开始。
 
 当前可执行的文档与 Git 检查见 [TESTING](docs/TESTING.md)。更换对话前后以仓库文件和 Git 记录恢复，不依赖旧聊天记忆。
 

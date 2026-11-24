@@ -10,12 +10,15 @@
 | MSVC Build Tools 2022 | 17.14.45 / installationVersion 17.14.37906.3 | 共享系统安装；VC 工具目录 14.44.35207 |
 | Windows SDK | 10.0.26100.0 | 共享系统安装；组件清单 .vsconfig |
 | WebView2 Runtime | 157.0.4341.60 | 复用系统现有运行时，未重复安装 |
-| PowerShell | 7.6.9 | 本机实际版本；统一脚本在 T02 建立 |
+| PowerShell | 7.6.9 / Windows PowerShell 5.1 | T02 脚本兼容两者，已实测 |
 | Git | 2.55.0.windows.5 | 本机实际版本 |
 | Tauri crate / tauri-build | 2.12.7 / 2.7.6 | src-tauri/Cargo.toml 精确约束、Cargo.lock |
 | Tauri CLI / JS API | 2.12.6 / 2.12.5 | desktop/package.json 精确约束、pnpm-lock.yaml |
 | React / React DOM | 19.3.1 | desktop/package.json、pnpm-lock.yaml |
 | TypeScript / Vite / React 插件 | 5.9.3 / 7.3.8 / 5.2.0 | desktop/package.json、pnpm-lock.yaml |
+| Vitest / Biome | 4.1.12 / 2.6.8 | T02 测试与格式/lint，保持 Vite 7 主版本 |
+| Testing Library React / user-event | 16.3.3 / 14.6.13 | T02 连接状态与用户重试测试 |
+| jest-dom / jsdom | 7.0.1 / 27.4.0 | 与 Vitest 4 相容的 matcher 和 DOM 环境 |
 
 本机注册表报告 ProductName=Windows 10 Pro、DisplayVersion=26H2、build=26300.9974，架构 AMD64。仅以这台 Windows x64 机器为当前验证环境，不据此声称已覆盖所有 Windows 10/11 版本。
 
@@ -35,7 +38,9 @@ Rust 安装参数为 `-y --profile minimal --default-host x86_64-pc-windows-msvc
 
 ## 运行方式
 
-从项目根目录运行。新终端中确认 node/pnpm/rustc 的版本与上表一致，然后执行 README 中的安装、构建与启动命令。
+优先运行 README 中的 scripts/check-env.ps1、bootstrap.ps1、test.ps1、build.ps1、dev.ps1。支持 PowerShell 7 和 Windows PowerShell 5.1；脚本内容采用 ASCII，避免 5.1 对无 BOM UTF-8 脚本的解码问题。脚本从自身位置定位项目，恢复调用前的工作目录和进程 PATH，不修改系统设置。
+
+check-env 只检查已安装的锁定版本、MSVC、SDK 及 WebView2；Rust 检查先查询已安装工具链，再使用 rustup run，避免 rustc 代理为缺失版本自动下载。缺失工具链须按本文件安装后重跑；bootstrap 仅安装项目依赖，不安装系统工具。
 
 Codex 的内置 pnpm 包含另一 Node 版本（24.22.3）。本项目本轮采用共享 pnpm 搭配用户现有 Node 24.21.0；在当前 Codex shell 需要时按以下方式临时调整进程 PATH，不修改系统 PATH：
 
@@ -48,6 +53,14 @@ rustc --version
 ```
 
 pnpm 11 使用 `pnpm-workspace.yaml` 的 storeDir/engineStrict/saveExact/allowBuilds 配置；仅批准 esbuild 构建脚本。初次安装曾因旧式配置和未批准脚本失败，修正后已重新安装成功并通过 frozen-lockfile 检查。初次失败产生过默认共享 store，不删除或假设其仅属于本项目。
+
+T02 脚本自动选择共享 pnpm、现有 Node 与 Cargo 用户安装，检查严格版本，不需要手工使用上述 PATH 块。bootstrap 使用 `pnpm install --frozen-lockfile` 与 `cargo fetch --locked --target x86_64-pc-windows-msvc`。每条原生命令的非零退出码会使脚本退出 1；已用受控 exit 7 验证失败传播。
+
+test/build/bootstrap/dev 的日志写入 `.local/logs/<任务>.log`，包含命令、退出码及 stdout 测试摘要；原生 stderr 同时显示在控制台。日志可能含本机路径，保持本地且不提交。
+
+build 当前使用 `tauri build --no-bundle --ci -- --locked`，生成 release exe；安装包策略留待 T24。Windows 应用和 Rust 测试共同链接项目 windows.manifest，确保 Common Controls v6 可用，避免测试程序在运行前报 STATUS_ENTRYPOINT_NOT_FOUND。未提高应用执行权限。
+
+Windows CI 使用 windows-2022、固定提交的官方 checkout/setup-node、项目 Node/Rust/pnpm 版本与同一套脚本。无 GUI runner 显式使用 -SkipWebView2；窗口、设备、离线与安装验收仍需本机执行。初次 push 后的实际运行状态必须单独核实，不由配置文件存在推断通过。
 
 若系统 PowerShell profile 的 conda 启动报错，可使用 `pwsh -NoProfile`；本项目未改动用户 profile。
 

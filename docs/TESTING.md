@@ -1,5 +1,30 @@
 # Lyreniq 验证记录
 
+## T02-a 验收与 T02-b 待验（2026-11-24）
+
+起点：`0ba2701de101f39f6205b0836127969a773cf456`。工作区起初干净，fetch 后与远端一致；先复跑 T01 的 frozen 安装、fmt、cargo check、前端构建，并实际观察原生窗口及真实 runtime_label 成功，再实施 T02。
+
+| 命令/检查 | 实际结果 |
+|---|---|
+| 在 D:\ 调用 scripts/check-env.ps1 | PowerShell 7 和 Windows PowerShell 5.1 均退出 0；工具版本、MSVC、SDK、WebView2 通过 |
+| 在 D:\ 调用 scripts/bootstrap.ps1 | 0；pnpm install --frozen-lockfile、cargo fetch --locked --target x86_64-pc-windows-msvc 通过 |
+| scripts/test.ps1 | PowerShell 7、5.1 均退出 0；PowerShell 解析、Rust fmt/clippy、前端 Biome/typecheck 通过 |
+| Rust IPC 测试 | 2 passed：注册命令可经 IPC 调用、未注册命令被拒绝；main/doc test 为 0 项，不计入 2 项 |
+| 前端测试 | 3 passed：等待真实响应才显示成功、失败后可重试、后续连接失败清除旧成功读数 |
+| Invoke-Checked 的受控 exit 7 演练 | 成功捕获为失败；没有被 Out-Host/日志管线吞掉退出码 |
+| scripts/build.ps1 | 0；最终 Windows 清单配置在 PowerShell 5.1（项目目录外）通过；产物 target/release/lyreniq-desktop.exe；跳过安装包 |
+| scripts/dev.ps1 | 在 D:\ 经 PowerShell 5.1 启动 Vite 与 cargo run --locked，原生 exe 已运行；最终可视窗口/按钮/退出复验未完成，见下 |
+| 本地日志 | .local/logs/bootstrap.log、test.log、build.log、dev.log；命令、退出码与 stdout，stderr 同时显示于控制台；均忽略 |
+| Windows CI | 配置已建立；本记录写于 push 前，实际运行状态由 push 后交付报告及 GitHub Actions 记录核实 |
+
+首次 Rust 测试在运行前报 STATUS_ENTRYPOINT_NOT_FOUND（0xc0000139）；链接诊断确认 Common Controls v6 API。第一次直接追加清单还造成重复 manifest（LNK1123）；最终使用单一 windows.manifest，为应用和测试共同链接，随后 Rust 测试与 release 构建通过。没有降低断言、跳过测试或安装替代 DLL。
+
+新增依赖固定为 Vitest 4.1.12、Biome 2.6.8、Testing Library React 16.3.3/user-event 14.6.13、jest-dom 7.0.1、jsdom 27.4.0；保持 T01 的 Vite/React 主版本。Biome 使用 recommended preset，不关闭 lint 规避问题。
+
+**T02-b 尚未验收**：最终统一 dev 脚本的窗口检查期间，桌面工具报告物理 Esc 停止。本轮已停止桌面控制并终止测试用开发进程。脚本启动输出、mock IPC 和此前 T01 的窗口证据均不能替代这一最终 GUI 复验，因此 T02 父任务仍为 IN_PROGRESS。
+
+T02-b 恢复时先核实 Git/文件并重跑 check-env/bootstrap/test/build，再启动 dev.ps1，实际检查窗口、Rust 返回值、按钮和退出；必要时保存 docs/evidence/T02-b。通过后才将 T02 父任务标为 VERIFIED，并进入 T03。
+
 ## T01 验收（2026-11-24）
 
 起点为 T00 提交 `562cfadb1b818b1f04b19d05c114b9cba211c5fd`。实施前重跑 T00 的文档/哈希断言、15 项忽略与 6 项可跟踪例外，检查 Git 工作区、历史、diff 与提交空白，全部符合预期；上一轮没有应用，应用构建/GUI 回归不适用。
