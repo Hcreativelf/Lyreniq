@@ -1,6 +1,33 @@
 # Lyreniq 验证记录
 
-## T02-a 验收与 T02-b 待验（2026-11-24）
+## T02-b 后台原生 UI 验收（2026-11-24）
+
+起点：`def1765d43745d9b310fbeba511ff257ee140f9a`（T02-a）。开始时工作区干净、远端一致；先复跑 check-env/bootstrap/test/build。上轮 [Windows checks run 45338108012](https://github.com/Hcreativelf/Lyreniq/actions/runs/45338108012) 的实际 conclusion=success，工程检查与 release 构建全部通过。
+
+用户正在使用桌面，本轮采用隐藏的真实 Tauri/WebView2 实例，通过 loopback CDP 操作页面；没有使用桌面控制工具、前置窗口或注入系统鼠标键盘。测试配置、profile 和构建目录隔离，不修改生产窗口配置或 ACL。
+
+| 命令/检查 | 实际结果 |
+|---|---|
+| scripts/test-ui.ps1（PowerShell 7） | 最终方案全部 5 项检查通过，退出 0 |
+| 在 D:\ 经 Windows PowerShell 5.1 调用 scripts/test-ui.ps1 | 最终格式化脚本全部 5 项检查通过，退出 0；8.345 秒 |
+| 真实页面与 Rust | 页面显示 Lyreniq；实际 runtime_label 返回 Lyreniq 0.1.0 · windows |
+| 后台状态 | 实际原生 is_visible=false、is_focused=false；按钮与截图后重复断言通过 |
+| 重连按钮 | CDP 点击页面按钮；观察真实 POST ipc.localhost/runtime_label，状态 200、tauri-response=ok，响应值与 Rust 版本一致 |
+| 渲染器截图 | 1000×700、无页面溢出；已人工查看生成 PNG；不包含用户桌面 |
+| 正常关闭 | 测试专用窗口 close IPC；dev 退出 0；Vite 与 CDP 端口释放；不冒充标题栏实体点击 |
+| 最终 bootstrap.ps1 | 退出 0；pnpm frozen-lockfile、cargo fetch --locked 通过 |
+| 最终 test.ps1 | 退出 0；PS/MJS 解析、MJS Biome recommended、Rust fmt/clippy、2 项 Rust IPC、前端 lint/types 和 3 项 Vitest 通过 |
+| 最终 build.ps1 | 退出 0；target/release/lyreniq-desktop.exe 生成；安装包留给 T24 |
+
+证据：[后台渲染截图](evidence/T02-b/native-window.png)、[脱敏结果](evidence/T02-b/result.json)。原始最终运行位于 .local/ui-smoke/2026-11-24T06-49-07-123Z，独立日志和 latest.json 保留在被忽略的 .local 内。playwright-core 1.65.1 精确锁定，直接连接已安装 WebView2，没有下载另一个浏览器。
+
+中间一次观测方案因尝试替换 Tauri 只读 invoke 属性而超时，结果保留为 failed；最终改为监听真实 IPC 网络响应，随后两次完整验证均通过，没有更改保护或降低返回值断言。
+
+T02-b 与 T02 父任务的工程 smoke 验收完成。标题栏实体交互、DPI 矩阵、系统权限、设备与生产离线不在本次结果内。现有 GitHub CI 只执行工程检查和 release 构建，后台原生 UI 目前仅本机实测。本轮提交后的 CI 实际状态由交付报告和对应 SHA 的 Actions 核实，下一轮回填。
+
+## T02-a 验收与当时的 T02-b 待验（历史快照，2026-11-24）
+
+以下保留当时的真实状态；T02-b 的后续完成证据及 T02-a 的实际 CI 成功结果见上节。
 
 起点：`0ba2701de101f39f6205b0836127969a773cf456`。工作区起初干净，fetch 后与远端一致；先复跑 T01 的 frozen 安装、fmt、cargo check、前端构建，并实际观察原生窗口及真实 runtime_label 成功，再实施 T02。
 

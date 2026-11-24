@@ -19,6 +19,7 @@
 | Vitest / Biome | 4.1.12 / 2.6.8 | T02 测试与格式/lint，保持 Vite 7 主版本 |
 | Testing Library React / user-event | 16.3.3 / 14.6.13 | T02 连接状态与用户重试测试 |
 | jest-dom / jsdom | 7.0.1 / 27.4.0 | 与 Vitest 4 相容的 matcher 和 DOM 环境 |
+| playwright-core | 1.65.1 | 后台直连已有 WebView2，不下载浏览器 |
 
 本机注册表报告 ProductName=Windows 10 Pro、DisplayVersion=26H2、build=26300.9974，架构 AMD64。仅以这台 Windows x64 机器为当前验证环境，不据此声称已覆盖所有 Windows 10/11 版本。
 
@@ -61,6 +62,18 @@ test/build/bootstrap/dev 的日志写入 `.local/logs/<任务>.log`，包含命�
 build 当前使用 `tauri build --no-bundle --ci -- --locked`，生成 release exe；安装包策略留待 T24。Windows 应用和 Rust 测试共同链接项目 windows.manifest，确保 Common Controls v6 可用，避免测试程序在运行前报 STATUS_ENTRYPOINT_NOT_FOUND。未提高应用执行权限。
 
 Windows CI 使用 windows-2022、固定提交的官方 checkout/setup-node、项目 Node/Rust/pnpm 版本与同一套脚本。无 GUI runner 显式使用 -SkipWebView2；窗口、设备、离线与安装验收仍需本机执行。初次 push 后的实际运行状态必须单独核实，不由配置文件存在推断通过。
+
+## 后台原生 UI 测试
+
+`pwsh -NoProfile -File scripts/test-ui.ps1`（也支持 powershell.exe）从任意目录运行。它通过统一 dev.ps1 的 BackgroundTestConfig 参数创建一个真实但 visible=false/focus=false 的窗口，窗口配置、构建目录、应用数据均单独隔离。启动阶段会编译自己的 target/ui-smoke，首次耗时较长；后续复用缓存。
+
+测试配置仅写入 .local/ui-smoke，使用随机 loopback 端口、独立 appDirectoriesOverride 和测试专用的窗口状态读取/关闭权限。生产 tauri.conf.json 和 capability 文件不改动，测试不开放远程公网调试，也不使用桌面控制工具。脚本实际读取原生 is_visible/is_focused，点击和截图后再次检查。
+
+Playwright 连接真实 WebView2，监听按钮触发的 Rust IPC 响应并核对返回值；直接从渲染器截取页面，而非抓取用户桌面。正常关闭使用仅对测试实例授权的窗口 close 命令，并核对 dev 进程退出 0、Vite/CDP 端口释放。失败时只终止该测试自己创建的进程树。
+
+结果及独立 profile 留在 .local/ui-smoke，每轮结果汇总到 latest.json；适用的脱敏截图和结果可复制到 docs/evidence。当前已测 1000x700 页面，不能据此声称已验证标题栏实体点击、其他 DPI/分辨率、设备权限或完整生产离线行为。GitHub CI 当前不运行这项原生 UI 测试。
+
+依据：[Tauri 窗口配置](https://v2.tauri.app/reference/config/)、[Playwright CDP 接口](https://playwright.dev/docs/api/class-browsertype#browser-type-connect-over-cdp)、[Microsoft WebView2 调试参数](https://learn.microsoft.com/en-us/microsoft-edge/webview2/concepts/webview-features-flags)。
 
 若系统 PowerShell profile 的 conda 启动报错，可使用 `pwsh -NoProfile`；本项目未改动用户 profile。
 

@@ -2,7 +2,7 @@
 
 Lyreniq 是 Universal Tuner 通用乐器调音与音准分析项目的软件名称。目标是提供现代、专业的本地调音工具；首个交付平台为 Windows 桌面。
 
-当前已通过 T01 的 Windows Tauri + React 最小窗口验收；T02-a 已建立脚本、自动化测试与 release 构建基线，T02-b 的最终原生窗口复验待完成。调音功能和安装包尚未实现。
+当前已通过 T02 工程基线验收：最小 Windows 窗口、环境脚本、自动化测试、release 构建及后台原生 UI smoke test。调音功能和安装包尚未实现。
 
 ## 项目入口
 
@@ -38,12 +38,17 @@ pwsh -NoProfile -File scripts/check-env.ps1
 pwsh -NoProfile -File scripts/bootstrap.ps1
 pwsh -NoProfile -File scripts/test.ps1
 pwsh -NoProfile -File scripts/build.ps1
+pwsh -NoProfile -File scripts/test-ui.ps1
 pwsh -NoProfile -File scripts/dev.ps1
 ```
 
 也支持 `powershell.exe -NoProfile -File scripts/<名称>.ps1`（Windows PowerShell 5.1）。脚本从自身位置推导项目根目录，可在其他工作目录用绝对脚本路径调用。check-env 只检查；bootstrap 使用锁文件下载项目依赖；test 执行 PowerShell 解析、Rust fmt/clippy/test 和前端 lint/typecheck/test；build 生成 `target/release/lyreniq-desktop.exe`，当前明确跳过安装包；dev 启动原生窗口及本机 Vite。
 
 日志保存在 `.local/logs`，不提交。首次 bootstrap 需要网络；工具链缺失由检查报告，不静默安装系统组件。CI 在 Windows runner 上执行同一套脚本；`-SkipWebView2` 仅供无 GUI 的构建/CI，明确跳过运行时检查，不能代替原生窗口验收。CI 实际结果见 TESTING/交付报告。
+
+日常 UI 验证优先运行 `test-ui.ps1`：真实 Tauri 窗口保持隐藏、不聚焦，Playwright 仅通过本机 WebView2 协议检查渲染、真实 Rust IPC、重新验证按钮及正常关闭，不操作桌面鼠标键盘。无需额外下载浏览器。隔离构建、数据、临时配置及结果在 `target/ui-smoke` 和 `.local/ui-smoke`；正式应用的窗口/权限/数据配置不变。后台渲染[截图](docs/evidence/T02-b/native-window.png)和[结果](docs/evidence/T02-b/result.json)已保存。
+
+`dev.ps1` 默认会打开普通窗口，使用桌面时不要运行它；后台测试会通过专用参数调用同一脚本。标题栏实体交互、系统 DPI、权限弹窗和音频设备另做人工/真机验收。当前 GitHub CI 执行自动化检查与 release 构建，后台原生 UI smoke test 已在本机实测，尚未纳入 CI。
 
 低层命令仍可使用：`pnpm build` 构建前端，`pnpm dev` 启动桌面，`pnpm test` 仅跑前端测试；完整回归使用 scripts/test.ps1。原生窗口显示真实 Rust 版本/平台信息，可重新验证连接；普通浏览器预览没有桌面后端。UI 设计系统从 T03 开始。
 

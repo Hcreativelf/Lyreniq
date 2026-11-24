@@ -10,6 +10,12 @@ try {
             [System.Management.Automation.Language.Parser]::ParseFile($file.FullName, [ref]$tokens, [ref]$parseErrors) | Out-Null
             if ($parseErrors.Count -gt 0) { throw "PowerShell syntax errors in $($file.Name): $parseErrors" }
         }
+        foreach ($file in Get-ChildItem -LiteralPath $PSScriptRoot -Filter '*.mjs') {
+            Invoke-Checked -Command $script:NodeCommand -Arguments @('--check', $file.FullName)
+        }
+        if (Test-Path -LiteralPath (Join-Path $PSScriptRoot 'biome.json')) {
+            Invoke-Checked -Command $script:PnpmCommand -Arguments @('--filter', '@lyreniq/desktop', 'exec', 'biome', 'check', $PSScriptRoot, '--config-path', (Join-Path $PSScriptRoot 'biome.json'), '--error-on-warnings')
+        }
         Invoke-Checked -Command $script:CargoCommand -Arguments @('fmt', '--all', '--', '--check')
         Invoke-Checked -Command $script:CargoCommand -Arguments @('clippy', '--workspace', '--all-targets', '--locked', '--', '-D', 'warnings')
         Invoke-Checked -Command $script:CargoCommand -Arguments @('test', '--workspace', '--locked')

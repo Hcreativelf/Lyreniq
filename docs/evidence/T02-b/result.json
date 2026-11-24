@@ -1,0 +1,30 @@
+{
+  "task": "T02-b",
+  "date": "2026-11-24",
+  "timezone": "Asia/Shanghai",
+  "status": "passed",
+  "command": "powershell.exe -NoProfile -File scripts/test-ui.ps1 (from outside the project)",
+  "mode": "hidden native Tauri/WebView2 over loopback CDP",
+  "appVersion": "0.1.0",
+  "checks": [
+    "real Tauri page rendered and Rust runtime_label succeeded",
+    "native window reports hidden and unfocused",
+    "reconnect button called Rust while window stayed hidden and unfocused",
+    "renderer screenshot saved at 1000x700 with no overflow",
+    "native window closed normally; dev script exited 0 and both ports were released"
+  ],
+  "nativeWindowState": {
+    "visible": false,
+    "focused": false
+  },
+  "exit": {
+    "code": 0,
+    "signal": null
+  },
+  "screenshot": "native-window.png",
+  "unverified": [
+    "native titlebar interaction",
+    "DPI/display scaling matrix",
+    "audio devices"
+  ]
+}

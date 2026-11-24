@@ -10,6 +10,7 @@
 - 开始前读取本文件、主任务书、README、`docs/STATUS.md`、`docs/HANDOFF.md`，必要时读取 DECISIONS 和 TESTING。
 - 核实目录、分支、起点 commit、实际文件；运行 `git status --short --branch`、`git log -5 --oneline`、`git diff`、`git diff --cached`、`git remote -v`，远端 URL 不得泄露凭据。有授权远端时先安全 fetch 并检查 ahead/behind。
 - 必须复跑上轮关键验收、构建和适用 smoke test。若上轮只有文档，复验文档及 Git 基线；没有应用时明确构建与 GUI 不适用。失败先修复基线，不叠加功能。
+- 用户同时使用桌面，UI 测试默认使用 scripts/test-ui.ps1 的隐藏原生窗口/WebView2 协议或无头测试，不前置窗口、不注入系统鼠标键盘。需要前台人工交互时，先等用户明确允许的空闲时段。原生标题栏/DPI/设备权限等未测项目单独记录，不以后台渲染截图冒充完整系统级验收。
 - 保留用户文件与未提交修改，不擅自 reset、stash、覆盖或删除。任务书根目录原件为冻结输入，后续维护 `docs/` 内主文档，参见 DECISIONS。
 
 ## 工程与产品边界

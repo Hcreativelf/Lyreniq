@@ -63,12 +63,20 @@
 - 验证：2 项真实 mock IPC 测试、3 项前端行为测试、fmt/clippy/lint/typecheck 在两种 PowerShell 下通过；最终 release exe 构建通过。模拟原生命令 exit 7 被正确识别为失败。
 - CI：官方 Actions 使用经 ls-remote 核实的固定提交，权限 contents:read，Windows runner 使用同样脚本；实际 CI 结果在 push 后核实。
 
-## D009 — T02 分成可独立验收的两部分（2026-11-24）
+## D009 — T02 分成可独立验收的两部分（2026-11-24，当时状态）
 
 - 决策：T02-a 交付环境脚本、自动化测试、release 构建与 Windows CI 基线；T02-b 完成最终统一 dev 脚本的真实原生窗口/IPC、按钮和退出复验。T02 父任务保持 IN_PROGRESS，唯一下一任务为 T02-b。
 - 原因：T01 恢复窗口已实测通过；在 T02 实施后的最终窗口复验时，computer-use 报告物理 Esc 停止。遵守停止桌面控制，继续保存和验证不依赖 UI 的已授权工作；不把窗口未验写成通过。
 - 影响：T02-a 是已通过本地验收的独立工程基线，可独立提交/推送并核实 CI；T02-b 完成前不进入 T03。不以 mock 测试代替真实 GUI。
-- 验证：自动化结果见 TESTING；T02-b 的 GUI 证据待补齐。
+- 验证：当时 T02-b 的 GUI 证据待补齐；后续后台验收已完成，见 D010 和 TESTING。
+
+## D010 — 用户使用桌面期间的后台 UI 验收（2026-11-24）
+
+- 决策：用户要求后台 UI 测试，默认不使用会抢焦点或注入系统输入的桌面工具。T02-b 采用隐藏的真实 Tauri/WebView2 实例，Playwright 通过 loopback CDP 运行交互和截图，正式应用配置不变。
+- 原因：用户仍在使用桌面，先前 Esc 会停止桌面控制；协议测试可验证真实渲染和 IPC，同时避免与用户输入争用。
+- 隔离：专用 target/ui-smoke、独立 .local profile/临时配置、随机本机端口；只对测试实例授予读取窗口状态和关闭权限。脚本验证 hidden/unfocused 并检查正常退出和端口释放。没有把浏览器 mock 当作原生结果。
+- 验证：PowerShell 7/5.1（含项目目录外）后台 smoke 通过，真实按钮 IPC 响应核对、1000x700 渲染截图、native is_visible/is_focused=false、退出 0/端口释放均有证据。因此 T02-b 和父任务 T02 的工程 smoke 验收完成。
+- 范围：标题栏实体点击、DPI 矩阵、系统弹窗、音频设备留在相应后续任务；后台原生 UI 测试当前未纳入云端 CI。T02-a 的 Windows CI 已实际成功，记录见 TESTING。
 
 ## 尚未决定
 

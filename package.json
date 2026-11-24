@@ -13,6 +13,10 @@
     "typecheck": "pnpm --filter @lyreniq/desktop typecheck",
     "lint": "pnpm -r lint",
     "test": "pnpm -r test",
+    "ui:smoke": "node scripts/ui-smoke.mjs",
     "tauri": "pnpm --filter @lyreniq/desktop tauri"
+  },
+  "devDependencies": {
+    "playwright-core": "1.65.1"
   }
 }
