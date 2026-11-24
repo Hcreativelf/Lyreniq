@@ -1,0 +1,8 @@
+packages:
+  - apps/desktop
+
+storeDir: .local/pnpm-store
+engineStrict: true
+saveExact: true
+allowBuilds:
+  esbuild: true

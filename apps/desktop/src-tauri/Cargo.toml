@@ -1,0 +1,13 @@
+[package]
+name = "lyreniq-desktop"
+version = "0.1.0"
+description = "Lyreniq Windows desktop application"
+edition = "2021"
+rust-version = "1.100"
+publish = false
+
+[build-dependencies]
+tauri-build = { version = "=2.7.6", features = [] }
+
+[dependencies]
+tauri = { version = "=2.12.7", features = [] }

@@ -9,6 +9,7 @@ build/
 coverage/
 .vite/
 *.tsbuildinfo
+apps/desktop/src-tauri/gen/
 
 # Logs and temporary files
 *.log

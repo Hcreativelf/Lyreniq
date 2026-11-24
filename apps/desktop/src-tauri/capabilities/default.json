@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "main-window",
+  "description": "T01 最小窗口；未开放文件系统、网络、设备或其他插件权限。",
+  "windows": ["main"],
+  "permissions": []
+}

@@ -1,0 +1,16 @@
+{
+  "name": "lyreniq",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@11.25.0",
+  "engines": {
+    "node": "24.21.0",
+    "pnpm": "11.25.0"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @lyreniq/desktop tauri dev",
+    "build": "pnpm --filter @lyreniq/desktop build",
+    "typecheck": "pnpm --filter @lyreniq/desktop typecheck",
+    "tauri": "pnpm --filter @lyreniq/desktop tauri"
+  }
+}

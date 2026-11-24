@@ -1,6 +1,45 @@
 # Lyreniq 验证记录
 
-## T00 验收范围（2026-11-24）
+## T01 验收（2026-11-24）
+
+起点为 T00 提交 `562cfadb1b818b1f04b19d05c114b9cba211c5fd`。实施前重跑 T00 的文档/哈希断言、15 项忽略与 6 项可跟踪例外，检查 Git 工作区、历史、diff 与提交空白，全部符合预期；上一轮没有应用，应用构建/GUI 回归不适用。
+
+| 命令/检查 | 结果 | 证据 |
+|---|---|---|
+| `node --version`、`pnpm --version`、`rustc --version` | 均 0 | v24.21.0 / 11.25.0 / rustc 1.100.0；环境选择见 ENVIRONMENT |
+| `pnpm install --frozen-lockfile` | 0 | Already up to date；两项目 workspace；仅 esbuild 构建脚本被批准 |
+| `cargo fmt --all -- --check` | 0 | Rust 格式检查通过 |
+| `cargo check --workspace --locked` | 0 | lyreniq-desktop 编译检查通过；最终配置复验耗时 0.68s |
+| `pnpm build` | 0 | TypeScript 无错误；Vite 7.3.8 构建 32 个模块；最终 459ms |
+| `pnpm dev` | 原生窗口/IPC 通过；退出 0 | 原生 exe=target/debug/lyreniq-desktop.exe；页面显示 Lyreniq 0.1.0 · windows；重新验证按钮调用后仍成功 |
+| Windows 原生窗口证据 | 已保存 | [截图](evidence/T01/native-window.jpg)、[观测记录](evidence/T01/native-window.json) |
+| T00 GitHub 补推及核实 | 0，远端 hash 一致 | `git push -u origin main`、`git ls-remote --heads origin main` 返回 T00 hash |
+| 提交前远端同步 | 0 | `git fetch origin`、`git rev-list --left-right --count HEAD...origin/main` 输出 0/0 |
+
+首次 pnpm 安装因旧式配置/脚本未授权失败，修正 workspace YAML 和共享 pnpm 选择后重装成功；重复键错误也已修复，未把这些失败记成通过。MSVC 安装器返回 3010，后续 vswhere isComplete/isLaunchable=true、isRebootRequired=false，未重启即完成实际编译和窗口验收。
+
+窗口正常渲染并完成按钮验证；后续 inventory 显示窗口已退出，开发 CLI 返回 0。尝试代理 Alt+F4 时因检测到用户输入被保护机制拦截，未把这一动作计作代理自动关闭测试通过。首次遮挡的截图没有用作证据；已前置窗口后保存纯 Lyreniq 截图。
+
+T01 尚无单元测试套件、lint 或 CI；不声称 cargo test、Vitest、安装包构建、真实音频或生产离线运行通过。T02 将建立相应工程回归基线。
+
+下一轮先选择 ENVIRONMENT 中的共享工具链，在项目根目录复跑：
+
+```powershell
+node --version
+pnpm --version
+rustc --version
+pnpm install --frozen-lockfile
+cargo fmt --all -- --check
+cargo check --workspace --locked
+pnpm build
+pnpm dev
+git diff --check
+git show --format= --check HEAD
+```
+
+smoke test 必须观察真实原生窗口和 Rust 返回值，不能只看到 Vite ready 就判断桌面验收通过。核对两份锁文件仍被跟踪，以及 target/node_modules/dist/.local/gen 未被提交。原任务书 SHA-256 仍与 D002 基准一致。
+
+## T00 验收范围（历史快照，2026-11-24）
 
 本轮只有文档和 Git 初始化。原目录没有上一轮成果、测试或应用；上一轮应用回归不适用。任务书中的算法、UI、设备与发布矩阵是未来目标，本轮不把它们记作通过。
 

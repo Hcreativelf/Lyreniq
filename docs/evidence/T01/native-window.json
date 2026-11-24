@@ -1,0 +1,8 @@
+{
+  "task": "T01",
+  "date": "2026-11-24",
+  "executable": "target/debug/lyreniq-desktop.exe",
+  "title": "Lyreniq",
+  "result": "Native window rendered; runtime_label returned Lyreniq 0.1.0 · windows; reconnect button verified.",
+  "documentText": "UNIVERSAL TUNER · 工程初始化\nLyreniq\nWindows 桌面最小窗口\n桌面连接已建立\nLyreniq 0.1.0 · windows\n重新验证桌面连接\n当前仅验证工程启动；调音与音频功能尚未实现。"
+}

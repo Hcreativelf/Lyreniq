@@ -33,8 +33,29 @@
 - 影响：.gitattributes 对两份任务书设置 `-text whitespace=-blank-at-eol`；其他文件维持 Git 空白检查。缓存、构建、临时音频、用户数据、密钥和 IDE 私有配置忽略；明确保留测试夹具音频和锁文件。
 - 验证：提交前运行 diff 空白检查和代表性 git check-ignore 检查。
 
+## D005 — 用户授权的任务推进与共享安装（2026-11-24）
+
+- 决策：用户在 T00 后明确允许额度可用时自主推进下一任务，仍保持每个任务的复验、独立验收、交接、commit/push 边界；用户已同意安装 T01 必需组件，并允许共享系统/用户级环境。
+- 原因：后续直接用户指令优先于原任务书每轮结束即停止的默认规则。
+- 影响：无需每项重复询问是否开始；遇到需要用户操作或不可自动处理的问题时说明。无法读取实际额度余额，不承诺额度消耗或耗尽时点。
+- 验证：本轮先复验 T00，再进入 T01；共享工具链实测见 ENVIRONMENT。
+
+## D006 — T01 版本与配置基线（2026-11-24）
+
+- 决策：复用 Node 24.21.0/WebView2 157，安装共享 Rust 1.100.0、pnpm 11.25.0、MSVC 2022 与 SDK；具体版本见 ENVIRONMENT。直接依赖精确约束并提交两份锁文件。
+- 原因：官方稳定版本查询后在本机验证，避免使用 Codex 内置 pnpm 的不同 Node 版本。pnpm 11 非认证配置统一放 workspace YAML，store 在项目 .local，仅批准 esbuild 构建脚本。
+- 替代方案：强制把 SDK/全部工具迁入项目，或忽略 engine/build-script 错误；均不采用。
+- 影响：项目可通过声明的共享系统前置条件重建；缓存和二进制工具不提交。MSVC 安装器曾返回 3010，安装后工具已可用且 vswhere 无重启标记，未自动重启。
+- 验证：版本输出、前端 build、frozen-lockfile 安装、cargo check --workspace --locked 已通过；原生窗口结果另见 TESTING。
+
+## D007 — 最小原生窗口边界（2026-11-24）
+
+- 决策：T01 只建一个桌面 crate 与 React 页面，通过单个只读 runtime_label 命令返回真实版本/平台；不创建空 DSP/audio crate，不做调音 UI。
+- 原因：先验证真实 Windows 原生链路。桌面调用封装于 services/desktop.ts，生产 CSP 保持本地资源限制，开发 CSP 额外允许本机 Vite/React Refresh，capability 不开放插件权限。
+- 影响：应用标识暂用 com.lyreniq.desktop（开发标识，不表示拥有该域名）；bundle 暂关闭，签名/分发标识在发布任务复核。图标来自本仓库自有 L 字 SVG，由 Tauri CLI 生成 Windows ICO/PNG；不是最终品牌设计。
+- 验证：构建和原生 IPC smoke test 见 TESTING；其他平台、音频、UI 设计系统、安装包均未实现。
+
 ## 尚未决定
 
-- GitHub 目标仓库 URL，或所有者、名称和可见性（若新建，建议私有，仍由用户确定）。
-- 项目许可证、应用标识、工具链/依赖实际版本、Windows 支持范围、安装包签名与分发策略。
-- 工具链与依赖版本在 T01 真实验证后锁定；本轮不安装、不猜测版本，不添加 LICENSE 冒充授权。
+- 项目许可证、正式分发应用标识、Windows 支持范围、安装包签名与分发策略。
+- 不添加 LICENSE 冒充授权；不把本机 smoke test 当作所有 Windows 版本、设备或安装环境已通过。
