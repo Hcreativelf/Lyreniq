@@ -1,0 +1,70 @@
+# Project-local tools, dependency caches and build outputs
+.local/
+.venv/
+target/
+node_modules/
+.pnpm-store/
+dist/
+build/
+coverage/
+.vite/
+*.tsbuildinfo
+
+# Logs and temporary files
+*.log
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+tmp/
+temp/
+
+# Audio: only intentional, licensed/synthetic fixtures belong in Git
+recordings/
+*.wav
+*.mp3
+*.flac
+!/tests/fixtures/**/*.wav
+!/tests/fixtures/**/*.mp3
+!/tests/fixtures/**/*.flac
+
+# Local user settings and exports
+/settings.json
+/user-settings.json
+user-data/
+exports/
+*.user.json
+
+# Environment variables and credentials
+.env
+.env.*
+!.env.example
+.aws/
+*.key
+*.pem
+*.pfx
+*.p12
+*.jks
+*.keystore
+id_rsa
+id_ed25519
+credentials.json
+
+# Installers and binaries
+*.exe
+*.msi
+*.msix
+*.msixbundle
+*.cab
+*.pdb
+
+# Per-user editor and OS files
+.vscode/
+.idea/
+.vs/
+*.suo
+*.user
+.DS_Store
+Thumbs.db
+Desktop.ini
