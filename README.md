@@ -2,7 +2,7 @@
 
 Lyreniq 是 Universal Tuner 通用乐器调音与音准分析项目的软件名称。目标是提供现代、专业的本地调音工具；首个交付平台为 Windows 桌面。
 
-当前已通过 T04 调音显示与状态验收：音名、Hz、cents、目标音、指针、电平及置信度，以及主动启用的显式 Demo。默认没有测量读数，真实麦克风输入仍未接入；文件分析、参考音和安装包尚未实现。T03 导航/主题与工程回归保持通过。
+当前已通过 T05 纯 Rust 音律与数据模型验收：MIDI/Hz/cents、A4 校准、目标音映射及正弦/谐波测试信号生成器。T04 调音显示/Demo、导航和主题保持通过。尚无基频检测算法或真实麦克风输入，默认没有测量读数；文件分析、参考音和安装包尚未实现。
 
 ## 项目入口
 
@@ -16,6 +16,7 @@ Lyreniq 是 Universal Tuner 通用乐器调音与音准分析项目的软件名�
 | [TESTING](docs/TESTING.md) | 已执行检查、未验证范围与复验方式 |
 | [ENVIRONMENT](docs/ENVIRONMENT.md) | 实测工具版本、共享安装与项目内配置 |
 | [UI_GUIDE](docs/UI_GUIDE.md) | 设计 token、页面与组件、可访问性、开源参考及许可 |
+| [TUNING_CORE](docs/TUNING_CORE.md) | 纯 Rust 公式、模型不变量、目标映射与合成夹具 |
 
 根目录的 `UNIVERSAL_TUNER_DEVELOPMENT_PLAN.md` 保留为用户原始输入；`docs/` 版本是后续维护入口。T00 时二者字节一致。
 
@@ -26,11 +27,11 @@ Lyreniq 是 Universal Tuner 通用乐器调音与音准分析项目的软件名�
 - 候选技术：Rust、Tauri 2、React、TypeScript、Vite。具体版本和兼容性在 T01 实测并锁定。
 - 其他平台及复音检测留待 Windows MVP 后的独立任务。
 
-以上真实音频能力是计划功能；当前实现工作区、主题、真实桌面桥接状态，以及独立可测试的调音显示/Demo。
+以上真实音频能力是计划功能；当前实现 UI/Demo 与独立核心数学，尚未将核心接入音频或 UI。
 
 ## 开发、安装与验证
 
-已建立 Cargo/pnpm workspace，桌面应用位于 `apps/desktop`。Rust、Node、pnpm 与直接依赖版本已明确约束；Cargo.lock 和 pnpm-lock.yaml 用于复现依赖。本机缓存集中管理及其他电脑的回退方式见 ENVIRONMENT，不要求其他机器存在同样的 D 盘目录。
+已建立 Cargo/pnpm workspace，桌面应用位于 `apps/desktop`，纯 Rust 库位于 `crates/tuner-core`。核心没有外部 crate 依赖，桌面尚未链接核心。Rust、Node、pnpm 与直接依赖版本已明确约束；Cargo.lock 和 pnpm-lock.yaml 用于复现依赖。本机缓存集中管理及其他电脑的回退方式见 ENVIRONMENT，不要求其他机器存在同样的 D 盘目录。
 
 安装共享工具链并核对 [环境基线](docs/ENVIRONMENT.md) 后，在项目根目录运行：
 
@@ -56,6 +57,8 @@ pwsh -NoProfile -File scripts/dev.ps1
 在实时调音页点击“体验 Demo”后可选择准确、偏低/偏高、超量程、静音、低置信度、错误等 11 个模拟场景。界面持续标明模拟来源；退出或离开该页会清空读数。Demo 不访问麦克风或输出声音；“开始监听”仍禁用。±75 cents 等数值完整显示，只有指针停在 ±50 的量程边缘。
 
 当前可执行的文档与 Git 检查见 [TESTING](docs/TESTING.md)。更换对话前后以仓库文件和 Git 记录恢复，不依赖旧聊天记忆。
+
+核心可单独运行 `cargo test -p tuner-core --locked`；统一 test.ps1 也会自动测试两个 workspace 成员。音律和合成 PCM 测试不需要麦克风，也不会播放声音。设备枚举/选择与无可用输入时的恢复流程在 T09 实现，真实采集验收需另有实际输入设备证据。
 
 ## Git 与许可证
 

@@ -1,5 +1,26 @@
 # Lyreniq 验证记录
 
+## T05 音律核心、模型与合成夹具（2026-11-25）
+
+起点：`784149b18a36ec51f3a0938460e98b9719cb0768`（T04）。工作区干净，fetch 后 ahead/behind=0/0；[T04 CI run 45405643741](https://github.com/Hcreativelf/Lyreniq/actions/runs/45405643741) 按 SHA 核实 success。先从 D:\ 复跑五个统一脚本，原有 2 Rust + 26 TS、release、16 工作区/44 Demo 后台组合全部通过。
+
+| 实际命令/检查 | 结果 |
+|---|---|
+| cargo check -p tuner-core --offline | 0；仅新增本地 workspace 包，Cargo.lock 增加 4 行，未下载新依赖 |
+| cargo test -p tuner-core --locked | 0；17 集成测试（8 音律、4 模型、5 合成信号）+ 1 文档测试通过 |
+| cargo clippy -p tuner-core --all-targets --locked -- -D warnings | 0，无警告 |
+| cargo tree -p tuner-core --edges normal --locked | 0；只有 tuner-core，自身无外部依赖 |
+| 从 D:\ 经 powershell.exe -NoProfile -File 调用 check-env.ps1 / bootstrap.ps1 | 均 0；工具/运行时、pnpm frozen 安装和 cargo fetch --locked 通过 |
+| 同上调用 test.ps1 | 0；fmt/clippy、17 核心集成 + 1 文档 + 2 桌面 Rust 测试、26 TS、类型/lint/脚本解析通过 |
+| 同上调用 build.ps1 | 0；release exe 构建通过；UI 资产仍为 247.49 kB JS / gzip 78.48 kB；安装包留到 T24 |
+| 同上调用 test-ui.ps1 | 0；沿用 T04 的 16 组后台检查，16 工作区/44 Demo 组合、真实只读 Rust IPC、正常退出及端口释放通过 |
+
+17 项核心测试覆盖：A4=400/440/442/480 下全部 128 MIDI 往返（循环 512 个组合，不额外计作 512 个测试）；A0/C4/A4、升降号/八度、442 对 440 约 +7.85141504 cents；正负偏差和容差边界、锁定目标不夹断、列表等距/顺序/重复、MIDI 首尾、极端有限 Hz 的稳定计算、非法/非有限值拒绝。帧测试检查无效值和过期音高拒绝；夹具测试检查样点、两种采样率周期数、谐波投影幅度/能量、Nyquist、大小/幅度约束。
+
+核心及实际回归摘要见 [T05 结果](evidence/T05/result.json)，公式和 API 说明见 [TUNING_CORE](TUNING_CORE.md)。最终后台回归原始运行位于 .local/ui-smoke/2026-11-25T05-25-20-556Z，suite 名仍为 T04，表示旧 UI 回归而非 T05 新功能。UI 源码没有修改，不重复提交相同截图；既有 [T04 截图](evidence/T04/demo-dark-1024x700-tuned.png)继续有效。日志保持在 .local/logs。
+
+用户于本日说明本机没有麦克风；本轮未执行设备枚举/采集，没有设备数量结论。合成信号只在内存中生成，未发声，不能替代设备或检测精度结果。当前无 YIN/FFT、无 UI 桥接/IPC 序列化；设备、原生 DPI/标题栏、生产离线与安装仍待验。本轮 CI 在提交/push 后按 SHA 核实，由最终报告给出，下一轮回填。
+
 ## T04 调音显示与显式 Demo 验收（2026-11-24）
 
 起点：`3c6779919ff169f874d074baac3a7578673a8f76`（T03）。开始时工作区干净，fetch 后 ahead/behind=0/0；上轮 [Windows CI run 45387529930](https://github.com/Hcreativelf/Lyreniq/actions/runs/45387529930) 按 SHA 核实 success。先从 D:\ 复跑 check-env/bootstrap/test/build/test-ui，2 Rust + 6 TS、release 及 T03 全套后台 UI 均通过，随后实施 T04。

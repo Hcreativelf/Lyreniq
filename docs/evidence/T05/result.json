@@ -1,0 +1,66 @@
+{
+  "task": "T05",
+  "date": "2026-11-25",
+  "timezone": "Asia/Shanghai",
+  "base_commit": "784149b18a36ec51f3a0938460e98b9719cb0768",
+  "status": "passed locally",
+  "core": {
+    "integration_tests": 17,
+    "documentation_tests": 1,
+    "dependencies": "Rust standard library only",
+    "a4_references": [
+      400,
+      440,
+      442,
+      480
+    ],
+    "midi_notes_per_reference": 128,
+    "cents_442_against_440": 7.851415040126504,
+    "core_test_command": "cargo test -p tuner-core --locked",
+    "core_clippy_command": "cargo clippy -p tuner-core --all-targets --locked -- -D warnings"
+  },
+  "regression": {
+    "script_shell": "Windows PowerShell 5.1 from outside project",
+    "scripts": [
+      "check-env",
+      "bootstrap",
+      "test",
+      "build",
+      "test-ui"
+    ],
+    "exit_code": 0,
+    "desktop_rust_tests": 2,
+    "frontend_tests": 26,
+    "native_ui_suite": "T04",
+    "native_workspaces": 16,
+    "demo_combinations": 44,
+    "native_window_state": {
+      "visible": false,
+      "focused": false
+    },
+    "normal_exit": {
+      "code": 0,
+      "signal": null
+    }
+  },
+  "hardware": {
+    "microphone": "user reported absent",
+    "enumeration_performed": false,
+    "capture_verified": false
+  },
+  "unimplemented": [
+    "YIN",
+    "FFT",
+    "audio input",
+    "UI bridge",
+    "IPC serialization"
+  ],
+  "unverified": [
+    "real audio-device capture",
+    "pitch detection accuracy",
+    "native DPI/titlebar",
+    "offline production",
+    "installer"
+  ],
+  "current_ci": "Verify after commit/push; not inferred from configuration"
+}

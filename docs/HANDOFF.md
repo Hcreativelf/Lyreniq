@@ -1,64 +1,62 @@
 # Lyreniq 交接记录
 
-## 本轮任务与起点
+## 任务与起点
 
-- 日期：2026-11-24（Asia/Shanghai）；目录 D:\2-workspace\Lyreniq；main 跟踪 origin/main。
-- 起点：3c6779919ff169f874d074baac3a7578673a8f76（T03）。工作区起初干净，安全 fetch 后 ahead/behind=0/0。
-- 上轮 [Windows CI run 45387529930](https://github.com/Hcreativelf/Lyreniq/actions/runs/45387529930) 已按起点 SHA 核实 completed/success。
-- 实施前从 D:\ 复跑 check-env/bootstrap/test/build/test-ui，2 Rust + 6 TS、release 和 T03 全套后台 UI 通过。
-- 本轮只完成 T04 — 调音器 UI 与状态模型；T05 未开始。没有新增依赖、系统组件、真实音频权限或缓存迁移。
+- 日期：2026-11-25（Asia/Shanghai）；D:\2-workspace\Lyreniq；main 跟踪 origin/main。
+- 起点：784149b18a36ec51f3a0938460e98b9719cb0768（T04）。起初干净，安全 fetch 后 ahead/behind=0/0；上轮 [CI run 45405643741](https://github.com/Hcreativelf/Lyreniq/actions/runs/45405643741) 按 SHA 核实 success。
+- 实施前从 D:\ 复跑 check-env/bootstrap/test/build/test-ui；原有 2 Rust、26 TS、release、16 工作区与 44 Demo 后台回归通过。
+- 本轮仅完成 T05 — 音律与 DSP 数据模型；T06 未开始，不实现 YIN/FFT/设备或 UI 桥接。
+- 用户明确说明本机没有麦克风。这是用户提供的硬件条件，本轮未枚举设备，不预设 OS 可用输入设备数量。
 
 ## 本轮交付
 
-- TunerWorkspace 展示音名/八度、Hz、cents、目标音/频率、指针、电平和置信度；继承 T03 token 与两主题，文案独立集中在 content/tuner.zh-CN.ts，样式在 tuner.css。
-- 默认为 unavailable/idle，无测量读数/指针/信号值，真实监听按钮禁用。点击“体验 Demo”才创建模拟适配器，持续显示模拟来源及非麦克风结果说明。
-- services/audio-backend.ts 提供展示契约与输入校验；AudioBackend 是 source + subscribe/start/stop。DemoBackend 只在模拟扩展提供 selectScenario；没有设备 API、音频生成、定时器或 DSP。
-- 六种状态：idle/listening/no-pitch/low-confidence/detected/error。只有 detected 含音高，其他状态清理旧值；无效/非有限值转错误。置信度是指标，不是准确概率。
-- 11 个固定 Demo 场景含 -50/0/+50、±75、A4→C4、等待、静音、低置信度、错误与 idle。指针限幅 ±50，数字完整保留。A4=440 Hz 为默认参考参数，不是默认测量结果。
-- Demo 进入后聚焦场景 select，Home/方向键可选，退出后焦点回入口；错误可重试。离页/退出取消订阅并停止，活动标记隔离迟到帧。
-- scripts/ui-tuner-checks.mjs 接入原有隐藏原生 smoke；16 工作区回归外再验证 44 Demo 组合，不操作系统鼠标键盘。
-- 已更新 README/UI_GUIDE/TESTING/ENVIRONMENT/DECISIONS/STATUS；[T04 脱敏结果](evidence/T04/result.json)及 45 张 PNG 已保存。两份原始任务书与锁文件未改。
+- Cargo workspace 新增 crates/tuner-core，Cargo.lock 仅增加本地包条目；没有外部依赖，cargo tree 已实际核实。桌面 crate 未链接核心，UI 保持 T04 显式 Demo。
+- 十二平均律 MIDI/Hz/cents、A4 校准、升降号/八度、最近半音/锁定/目标列表映射；完整音分不夹断。使用对数之差避免极端比值溢出；中点选高音并记录浮点保护。
+- 私有只读校验模型：PitchEstimate/PitchFrame/PitchStatus/TuningResult/TuningConfig/FrequencyRange；拒绝非有限或非法值。Detected 只能一个音高，其他状态无音高；Idle/Error 清空信号指标。
+- test_signal 模块生成有界、确定性的正弦/谐波 Vec<f32>；指定实际采样率、样本数和幅度预算，校验 Nyquist；无设备、音频播放、文件生成或随机数据。
+- 17 核心集成测试 + 1 文档测试；[TUNING_CORE](TUNING_CORE.md)记录公式、API、约束、Rust/TS 后续映射和夹具边界。
+- README/STATUS/TESTING/ENVIRONMENT/DECISIONS 已同步；[T05 结果](evidence/T05/result.json)保存实际验收摘要。两份原始任务书未改。
 
 ## 实际命令与结果
 
-最终在 D:\ 用 powershell.exe -NoProfile -File D:\2-workspace\Lyreniq\scripts\<名称>.ps1 逐个执行，五个脚本及外层进程均退出 0。
-
-| 脚本/检查 | 实际结果 |
+| 命令/检查 | 结果 |
 |---|---|
-| check-env | 锁定工具、MSVC、SDK、WebView2 通过 |
-| bootstrap | pnpm frozen-lockfile 与 cargo fetch --locked 通过；集中缓存可用 |
-| test | PS/MJS 解析、Biome、Rust fmt/clippy、2 Rust IPC、类型与 26 TS 测试通过 |
-| build | release exe 生成；Vite 2,144 模块，JS 247.49 kB / gzip 78.48 kB；安装包留给 T24 |
-| test-ui | 16 组检查：16 工作区与 44 Demo 组合、真实只读 Rust IPC、键盘/焦点、状态/数值边界、重试/清理、正常退出/端口释放通过 |
+| cargo check -p tuner-core --offline | 0，离线编译，锁文件只增本地包 |
+| cargo test -p tuner-core --locked | 0；8 音律 + 4 模型 + 5 信号 =17 集成测试，1 文档测试 |
+| cargo clippy -p tuner-core --all-targets --locked -- -D warnings | 0，无警告 |
+| cargo tree -p tuner-core --edges normal --locked | 0，只显示 tuner-core，零外部依赖 |
+| 从 D:\ 经 powershell.exe -NoProfile -File D:\2-workspace\Lyreniq\scripts\check-env.ps1 / bootstrap.ps1 | 均 0；环境、frozen pnpm、locked Cargo 通过 |
+| 同上 test.ps1 | 0；fmt/clippy、17 核心 + 1 文档 + 2 桌面 Rust、26 TS、前端/脚本 lint/typecheck 全通过 |
+| 同上 build.ps1 | 0；release exe 生成；UI 仍为 247.49 kB JS / gzip 78.48 kB；安装包留给 T24 |
+| 同上 test-ui.ps1 | 0；T04 suite 的 16 组后台检查，16 工作区/44 Demo、真实 runtime_label IPC、关闭/端口释放通过 |
 
-新增 20 TS 测试：10 展示/状态/生命周期，10 适配器/非法输入；原有 6 项 UI 行为和 2 项 Rust 均保留。默认、两主题准确、超量程、静音/错误等截图直接检查；1024×700 的 11 场景均截图，两种大窗口主题另保存准确状态，其余大窗口场景记录 DOM/布局断言。
+覆盖 128 MIDI×4 A4 的循环、A0/C4/A4、442→440 的 +7.85141504 cents、正负/超量程、目标/边界/非法值与极端有限输入；夹具验证样点、周期数、谐波幅度和能量。循环组合不额外计成几百个测试。文档示例也实际编译运行。
 
-最终原始 UI 运行：.local/ui-smoke/2026-11-24T13-33-29-937Z；latest.json 汇总该轮。日志位于 .local/logs/bootstrap.log、test.log、build.log、ui-smoke.log、dev-ui-smoke.log。源配置和生产 capabilities 未扩权，测试权限只在忽略的临时配置中。
+最终完整 UI 回归原始运行 .local/ui-smoke/2026-11-25T05-25-20-556Z，suite 标识保留 T04；T05 没有新 UI，不重复提交截图。日志 .local/logs/bootstrap.log、test.log、build.log、ui-smoke.log、dev-ui-smoke.log 保持忽略。完整回归后仅整理校准测试名称/移除局部常量断言，并再次通过 core test 和 fmt；库代码未再改动。
 
-真实失败与修复：初始项目外 Git 检查遗漏 -C，已纠正，基线无故障。Demo 夹具类型过宽曾使 typecheck 失败，已收窄 detected 类型。首次 native 重试检查早于 React 更新而读到临时空值（.local/ui-smoke/2026-11-24T13-29-56-720Z 为 failed），改用明确状态/焦点完成条件后两次完整后台运行通过，没有固定延时、删除断言或冒充首轮通过。
+## 设备、契约与边界
 
-## 缓存与范围
-
-- 本机缓存偏好继续遵循 ENVIRONMENT；pnpm/Cargo/旧 Vite 兼容链接和 .local/cache-paths.json 实际核实正常，没有新增缓存路径。
-- Demo 数据不是音频夹具、实际采集或 DSP 准确度结果。Rust 真实验证只覆盖已有 runtime_label，T04 不增加音频 IPC。
-- Windows 原生 DPI/跨屏/标题栏、设备、真实音准、生产断网与安装仍未验。125%/150% 仍仅 CDP 渲染模拟，不能替代系统实测。
-- 自身许可证、正式分发标识与签名待定；现有 Lucide ISC/Feather MIT 声明保持不变。
+- 无麦克风不影响本轮或基础合成算法测试。T09 再实际枚举/选择输入并实现无可用输入时的友好提示；真实采集/切换/拔出需有输入设备后的独立证据，不能拿 Demo 代替。
+- TuningConfig 当前约束 A4 400–480 Hz、容差 0–50 cents；MIDI 音符 0–127；合成夹具最多 480,000 样本/32 谐波。细节见 TUNING_CORE 与 D014。
+- T04 TS 展示契约未更改。Rust 结果为完整音名 A4，TS 为音级 A + 八度 4；T11 必须显式映射和做序列化契约测试。当前未引入 serde，未来反序列化不可绕过验证。
+- 尚无音高检测器/FFT，不能将音律算术误差测试称作基频检测精度。原生 DPI/标题栏、设备、生产离线和安装仍待验。
+- 本机缓存沿用 D:\4-stuff\Cache 及兼容链接；无新工具/包缓存设置。其他机器仍按 ENVIRONMENT 的项目内回退，不照搬盘符。
 
 ## Git 与 CI
 
-- 授权仓库：https://github.com/Hcreativelf/Lyreniq.git；不强推、不改写历史、不改可见性。
-- 本记录写于提交/push 前；最终 hash、远端 SHA 和本轮 CI 状态由最终报告提供，下一轮按 Git/Actions 回填。
-- 本轮建议提交：feat(ui): build tuner display and signal states。
-- CI 只跑工程检查/release，不跑本机隐藏 GUI；push 后核实当前 SHA 实际结果，不由配置存在推断成功。
+- 授权仓库：https://github.com/Hcreativelf/Lyreniq.git；不强推、不改写历史或改变可见性。
+- 建议提交：feat(core): implement tuning math and pitch contracts。
+- 本记录写于提交/push 前；最终 SHA、远端核实和本轮 CI 由最终报告给出，下一轮从 Git/Actions 回填。不要将提交自身 SHA 写入自身。
+- Windows CI 使用统一脚本，会自动覆盖新 workspace 成员；只执行工程检查/release，不运行本机 GUI。必须查当前 SHA 的实际结论。
 
 ## 唯一下一任务
 
-**T05 — 音律与 DSP 数据模型。**
+**T06 — 基础 YIN 单音算法。**
 
-1. 读取 AGENTS、README、完整主任务书、STATUS/HANDOFF、UI_GUIDE、TESTING、ENVIRONMENT 和 DECISIONS；核对实际 Git、分支/工作区/remote，安全 fetch，核实本轮提交与 CI。
-2. 从项目外复跑 check-env/bootstrap/test/build/test-ui；先恢复 T04 基线，再开发。核对锁文件跟踪、缓存忽略/兼容链接，以及原任务书 D002 哈希。
-3. 按 T05 建立与 Tauri/设备无关的 tuner-core，定义 Rust 音高帧/音律模型、MIDI/Hz/cents/A4 转换、目标映射及确定性正弦/谐波测试生成器；不实现 YIN/FFT 或 UI 桥接。
-4. 覆盖 A4=440/442、C4、A0、正负偏差、边界/非法/非有限值，442 对 440 约 +7.85 cents。T04 TS 是展示契约，后续 T11 再建立 Rust/TS IPC 映射与契约测试。
-5. UI 验证继续后台，不前置窗口或注入系统输入；每项结束更新交接、实际验收、显式 stage、commit/push、核实远端及 CI。
+1. 读取 AGENTS、README、完整主任务书、STATUS/HANDOFF、TUNING_CORE、TESTING、ENVIRONMENT 和 DECISIONS；核对 Git、分支、diff、远端，安全 fetch，核实本轮提交/CI。
+2. 复跑 cargo test -p tuner-core --locked 与项目 check-env/bootstrap/test/build/test-ui；核对锁文件、缓存、原任务书 D002 哈希。前置失败先修复。
+3. 按 T06 实现 YIN 差分/累计归一化/lag 边界/谷值/插值/能量门限/置信度；使用实际采样率与配置频率范围，返回零或一个结果，不接入设备或 UI。
+4. 用本轮 test_signal 在 44.1/48 kHz 验证 A0/A1/A2/A4/C4、非标准频率与空/静音/无效输入。稳定合成纯音目标 ±1 cent；未达标如实记录并拆修复，不降低断言或假称可用。
+5. 本轮不提前做 T07 复杂鲁棒性或实时 worker；UI 测试继续后台。结束更新交接、真实验收、显式 stage、commit/push、核实远端/CI。
 
-当前可以体验调音 UI Demo，仍不能用于真实乐器调音。
+当前仍只能体验 UI Demo 与核心计算，不能测量真实乐器音高。
