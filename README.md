@@ -2,7 +2,7 @@
 
 Lyreniq 是 Universal Tuner 通用乐器调音与音准分析项目的软件名称。目标是提供现代、专业的本地调音工具；首个交付平台为 Windows 桌面。
 
-当前核心已实现 T06 基础 YIN 单音检测，以及 T05 的 MIDI/Hz/cents、A4 校准、目标音映射和合成信号生成器。44.1/48 kHz 下 22 个稳定纯音组合通过 ±1 cent 测试；这不代表全频段或真实设备精度保证，边界限制见 TUNING_CORE。T04 调音显示/Demo、导航和主题保持通过。核心尚未接入界面或真实麦克风，默认没有测量读数；文件分析、参考音和安装包尚未实现。
+当前核心已通过 T07 固定夹具的 YIN 鲁棒性与单机性能验收，保留 T06 参考实现和 T05 音律计算。44.1/48 kHz 下 130 个纯音窗口满足 ±1 cent，强泛音/噪声/衰减及平滑有独立测试；检测核心最坏已测 p95 约 3.56 ms。适用条件和限制见 YIN_VALIDATION，不代表连续频段或真实设备保证。界面仍为 T04 显式 Demo，尚未接入核心或真实麦克风；文件分析、参考音和安装包尚未实现。
 
 ## 项目入口
 
@@ -17,6 +17,7 @@ Lyreniq 是 Universal Tuner 通用乐器调音与音准分析项目的软件名�
 | [ENVIRONMENT](docs/ENVIRONMENT.md) | 实测工具版本、共享安装与项目内配置 |
 | [UI_GUIDE](docs/UI_GUIDE.md) | 设计 token、页面与组件、可访问性、开源参考及许可 |
 | [TUNING_CORE](docs/TUNING_CORE.md) | 纯 Rust 公式、模型不变量、目标映射与合成夹具 |
+| [YIN_VALIDATION](docs/YIN_VALIDATION.md) | YIN 鲁棒性、平滑、误差/覆盖率、CPU 与性能对照 |
 
 根目录的 `UNIVERSAL_TUNER_DEVELOPMENT_PLAN.md` 保留为用户原始输入；`docs/` 版本是后续维护入口。T00 时二者字节一致。
 
@@ -58,7 +59,7 @@ pwsh -NoProfile -File scripts/dev.ps1
 
 当前可执行的文档与 Git 检查见 [TESTING](docs/TESTING.md)。更换对话前后以仓库文件和 Git 记录恢复，不依赖旧聊天记忆。
 
-核心可单独运行 `cargo test -p tuner-core --locked`；统一 test.ps1 也会自动测试两个 workspace 成员。YinDetector 接受归一化单声道 PCM 和实际采样率，默认固定 300 ms 窗口，返回零或一个音高；属于直接差分参考实现，不能放进音频回调，性能优化留给 T07。音律和合成 PCM 测试不需要麦克风，也不会播放声音。设备枚举/选择与无可用输入时的恢复流程在 T09 实现，真实采集验收需另有实际输入设备证据。
+核心可单独运行 `cargo test -p tuner-core --locked`；统一 test.ps1 自动测试两个 workspace 成员。YinDetector 接受归一化单声道 PCM 和实际采样率，默认固定 300 ms 窗口，返回零或一个音高；detect_reference 保留 T06 对照。PitchSmoother 单独处理展示值并保留原始数据，不能将这些运算放入音频回调。运行 `powershell.exe -NoProfile -File scripts/bench-yin.ps1` 可在隐藏进程中复测误差、p50/p95 和 CPU。合成测试无需麦克风、不播放声音；T09 再实现设备枚举/选择及无输入恢复，真实采集需实际设备证据。
 
 ## Git 与许可证
 

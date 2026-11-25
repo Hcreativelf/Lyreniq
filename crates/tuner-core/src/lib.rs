@@ -14,12 +14,14 @@
 
 mod error;
 mod model;
+mod smoothing;
 pub mod test_signal;
 mod tuning;
 mod yin;
 
 pub use error::CoreError;
 pub use model::{FrequencyRange, PitchEstimate, PitchFrame, PitchStatus};
+pub use smoothing::{PitchSmoother, SmoothedPitch};
 pub use tuning::{
     cents_difference, frequency_to_midi, midi_to_frequency, MidiNote, NoteSpelling,
     TargetSelection, TuningConfig, TuningDirection, TuningResult,

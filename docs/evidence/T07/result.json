@@ -1,0 +1,106 @@
+{
+  "task": "T07",
+  "date": "2026-11-25",
+  "timezone": "Asia/Shanghai",
+  "base_commit": "58830d6536561526af734ee55ecb201a6984225b",
+  "status": "passed locally for fixed synthetic cases and measured single-machine detector budget",
+  "core": {
+    "unit_tests": 4,
+    "integration_tests": 33,
+    "documentation_tests": 2,
+    "external_dependencies": 0,
+    "reference_frequency_rows": 26,
+    "reference_tolerance_hz": 2E-09,
+    "sample_rates_hz": [
+      44100,
+      48000
+    ],
+    "window_ms": 300,
+    "hop_ms": 20,
+    "cases_per_rate": 32,
+    "frames_per_case": 5,
+    "engines": [
+      "T06",
+      "T07"
+    ],
+    "total_frame_rows": 640,
+    "known_target_frames_per_engine": 280,
+    "t06_detected_known_target_frames": 244,
+    "t07_detected_known_target_frames": 250,
+    "t07_pure_frames_passed": 130,
+    "t07_harmonic_frames_passed": 40,
+    "t07_harmonic_octave_errors": 0,
+    "t06_harmonic_octave_errors": 10,
+    "t07_harmonic_gross_errors": 0,
+    "t06_harmonic_gross_errors": 20,
+    "t07_noise_20db_max_abs_cents": 0.299695638,
+    "t07_noise_10db_max_abs_cents": 5.085479323,
+    "t07_noise_0db_detected": 0,
+    "unvoiced_false_positives": 0
+  },
+  "performance": {
+    "profile": "release",
+    "cpu": "Intel(R) Core(TM) i5-14600KF",
+    "logical_processors": 20,
+    "timing_rows": 20,
+    "measured_calls_per_engine": 640,
+    "warmup_calls_per_engine": 30,
+    "worst_t07_p95_ms": 3.5552,
+    "detector_budget_ms": 33.333333333333336,
+    "detector_budget_met": true,
+    "whole_pipeline_verified": false,
+    "script": "scripts/bench-yin.ps1",
+    "raw_run": ".local/dsp-bench/2026-11-25T09-40-27-263Z",
+    "detail": "machine.json and timings.csv; CPU batch and per-frame wall timing have different scopes"
+  },
+  "regression": {
+    "script_shell": "Windows PowerShell 5.1 from D:\\",
+    "scripts": [
+      "check-env",
+      "bootstrap",
+      "test",
+      "build",
+      "test-ui"
+    ],
+    "exit_code": 0,
+    "desktop_rust_tests": 2,
+    "frontend_tests": 26,
+    "native_ui_suite": "T04",
+    "native_checks": 16,
+    "native_workspaces": 16,
+    "demo_combinations": 44,
+    "native_window_state": {
+      "visible": false,
+      "focused": false
+    },
+    "normal_exit": {
+      "code": 0,
+      "signal": null
+    },
+    "raw_ui_run": ".local\\ui-smoke\\2026-11-25T09-38-53-078Z",
+    "bench_script_exit_code": 0,
+    "all_powershell_ast_parse": "passed",
+    "installer_built": false
+  },
+  "hardware": {
+    "capture_verified": false,
+    "enumeration_performed": false,
+    "microphone": "user reported absent"
+  },
+  "unimplemented": [
+    "FFT spectrum",
+    "audio input",
+    "real-time worker",
+    "core/UI bridge",
+    "IPC serialization"
+  ],
+  "unverified": [
+    "real audio-device clock/accuracy",
+    "broader instrument and noise corpus",
+    "whole pipeline performance",
+    "native DPI/titlebar",
+    "offline production",
+    "installer"
+  ],
+  "current_ci": "Verify current SHA after commit/push; final report and next-task backfill"
+}

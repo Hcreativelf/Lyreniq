@@ -1,0 +1,30 @@
+{
+  "cpu": "Intel(R) Core(TM) i5-14600KF",
+  "logical_processors": 20,
+  "os": "Microsoft Windows NT 10.0.26300.0",
+  "rust": "1.100.0",
+  "profile": "release; default Windows x64 target features",
+  "full_report_process": {
+    "cpu_seconds": 17.34375,
+    "wall_seconds": 17.676869399999998,
+    "busy_one_core_percent": 98.11550681027265,
+    "busy_machine_percent": 4.905775340513633
+  },
+  "cpu_benchmark_processes": {
+    "T06": {
+      "cpu_seconds": 6.78125,
+      "wall_seconds": 6.8576888,
+      "busy_one_core_percent": 98.88535624422036,
+      "busy_machine_percent": 4.944267812211018
+    },
+    "T07": {
+      "cpu_seconds": 1.265625,
+      "wall_seconds": 1.2748575,
+      "busy_one_core_percent": 99.27580141309912,
+      "busy_machine_percent": 4.963790070654956
+    }
+  },
+  "measured_calls_per_engine": 640,
+  "warmup_calls_per_engine": 30,
+  "note": "Batch process CPU includes generation, warmups and output; frame quantiles exclude warmups. Desktop remains in use. Do not run beside builds."
+}

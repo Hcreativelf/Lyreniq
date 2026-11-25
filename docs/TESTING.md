@@ -1,5 +1,30 @@
 # Lyreniq 验证记录
 
+## T07 YIN 鲁棒性、平滑与性能（2026-11-25）
+
+起点 58830d6536561526af734ee55ecb201a6984225b（T06），开始干净，安全 fetch 后 ahead/behind=0/0。[T06 CI run 45583704093](https://github.com/Hcreativelf/Lyreniq/actions/runs/45583704093) 按 SHA 核实 completed/success。先重跑 cargo test -p tuner-core --locked（从 D:\ 加 --manifest-path）和五个统一脚本：27 核心+2 文档、2 桌面 Rust、26 TS、release、16 工作区/44 Demo 通过；基线 UI .local/ui-smoke/2026-11-25T09-25-15-825Z。
+
+| 实际命令/检查 | 结果 |
+|---|---|
+| cargo test -p tuner-core --release --locked | 0；4 单元+33 集成+2 文档，共 37 核心测试+2 文档 |
+| cargo clippy -p tuner-core --all-targets --locked -- -D warnings | 0；所有目标无警告 |
+| 从 D:\ 经 powershell.exe -NoProfile -File D:\2-workspace\Lyreniq\scripts\check-env.ps1 / bootstrap.ps1 | 均 0；环境、frozen pnpm、locked Cargo，无新依赖 |
+| 同上 test.ps1 | 0；fmt/clippy、37 核心+2 文档、2 桌面 Rust、26 TS、类型/lint/脚本检查通过 |
+| 同上 build.ps1 | 0；release exe 生成；UI JS 仍为 247.49 kB/gzip 78.48 kB，未构建 T24 安装包 |
+| 同上 test-ui.ps1 | 0；16 组检查、16 工作区/44 Demo、真实 IPC、hidden/unfocused、正常退出/端口释放通过 |
+| 同上 bench-yin.ps1 | 0；新增脚本在项目外 Windows PowerShell 5.1 实际运行，顺序隐藏进程，正式误差/耗时/CPU 报告生成 |
+| 全部 scripts/*.ps1 的 PowerShell AST 解析 | 通过；包含后加的基准脚本 |
+
+最后完整回归原始 UI .local/ui-smoke/2026-11-25T09-38-53-078Z，沿用 T04 suite，不重复提交未改变的截图。完整回归后只新增基准包装脚本及修改注释；新脚本已实际运行/解析，算法没有再修改。正式基准独立于构建运行，目录 .local/dsp-bench/2026-11-25T09-40-27-263Z；早期并发试跑未用于正式性能表。
+
+[YIN_VALIDATION](YIN_VALIDATION.md) 记录固定矩阵、精确配置、原始对照与计算口径；[T07 摘要](evidence/T07/result.json)、[640 行逐帧误差](evidence/T07/frame-errors.csv)、[64 组摘要](evidence/T07/summary.json)、[20 组耗时](evidence/T07/timings.csv)、[机器/进程 CPU](evidence/T07/machine.json) 可复查。每引擎 320 个窗口，280 个有已知目标；T07 接受 250/280，拒绝的 30 个都是 0 dB。无目标静音等 40 窗口没有假音高。重叠窗口不是独立随机试验。
+
+新增 2 个差分/四次拟合单元测试，5 个鲁棒性/对照/长窗口/夹具集成测试，3 个中值、跳变/无效/错误复位及颤音集成测试。纯音/泛音 ≤1 cent，20/10 dB 接受帧 ≤5/10 cents，衰减 ≤5 cents；实际门槛见源码，未放宽旧 ±1 cent 断言。首轮 10 dB 低音约 43.55 cents 导致测试失败，扩大周期拟合跨度后原断言通过；常量 chunks_exact 的 Clippy 失败以 as_chunks 修复，未禁用检查。
+
+正式 T07 最坏 p95 3.5552 ms；参考 T06 的 48 kHz/440 Hz p95 11.3099 ms，T07 为 0.2015 ms。批处理 CPU 6.78125→1.265625 s，各含 640 计时调用+30 预热；包含生成/输出的进程 CPU 不等于帧墙钟分位数，也不是定时应用整机占用。没有整个音频 worker/FFT/IPC 的性能结论。
+
+用户报告本机无麦克风，本轮未枚举/采集；纯内存合成、不发声。设备/原生 DPI/标题栏/生产离线/安装仍未验。当前 UI 没有接入检测；本轮 Git/CI 在提交后按 SHA 核实，由最终报告给出，下一轮回填。
+
 ## T06 基础 YIN（2026-11-25）
 
 起点 af37a77a126d4b90e0efede36c1b83b315ffca31（T05）。开始干净，安全 fetch 后 ahead/behind=0/0；上轮 [CI run 45554383743](https://github.com/Hcreativelf/Lyreniq/actions/runs/45554383743) 的 test-and-build 及全部步骤经 GitHub 连接器核实 success。此前 SHA/run 对应关系保存在忽略的 .local/logs/T05-ci.json。先复验 17 核心集成 + 1 文档、2 桌面 Rust + 26 TS、release 及 16 工作区/44 Demo 后台组合；原始 UI 运行 .local/ui-smoke/2026-11-25T09-02-16-280Z。

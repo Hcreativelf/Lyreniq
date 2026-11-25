@@ -1,4 +1,4 @@
-//! Direct, fixed-window YIN reference implementation. Run outside audio callbacks.
+//! Bounded fixed-window YIN, with a T06 reference path for comparison.
 use crate::{CoreError, FrequencyRange, PitchEstimate, PitchStatus};
 
 /// Bounds scratch memory; this is not a real-time execution budget.
@@ -159,6 +159,25 @@ impl YinDetector {
     /// Empty/short windows yield NoPitch, never an estimate from an earlier call.
     /// Oversized windows, non-finite PCM and incompatible rates/configs are errors.
     pub fn detect(&mut self, pcm: &[f32], sample_rate: u32) -> Result<PitchDetection, CoreError> {
+        self.detect_impl(pcm, sample_rate, true)
+    }
+
+    /// Original T06 full-lag difference and three-point interpolation.
+    /// Kept as an accuracy/performance control; not the production fast path.
+    pub fn detect_reference(
+        &mut self,
+        pcm: &[f32],
+        sample_rate: u32,
+    ) -> Result<PitchDetection, CoreError> {
+        self.detect_impl(pcm, sample_rate, false)
+    }
+
+    fn detect_impl(
+        &mut self,
+        pcm: &[f32],
+        sample_rate: u32,
+        optimized: bool,
+    ) -> Result<PitchDetection, CoreError> {
         let layout = self.config.layout(sample_rate)?;
         if pcm.len() > layout.samples {
             return Err(CoreError::InvalidValue("PCM exceeds configured YIN window"));
@@ -190,6 +209,96 @@ impl YinDetector {
         let last_lag = layout.max_lag + 1;
         resize_buffer(&mut self.difference, last_lag + 1)?;
         resize_buffer(&mut self.normalized, last_lag + 1)?;
+        let comparison_samples = layout.samples - last_lag;
+        if optimized {
+            self.difference[0] = 0.0;
+            self.normalized[0] = 1.0;
+            let mut sum = 0.0;
+            // CMNDF depends only on earlier lags. Stop at the first candidate
+            // except for the bounded multiple-period check below.
+            for right in 1..=last_lag {
+                let value = difference_at(&self.centered, comparison_samples, right);
+                self.difference[right] = value;
+                sum += value;
+                self.normalized[right] = if sum > 0.0 {
+                    value * right as f64 / sum
+                } else {
+                    1.0
+                };
+                let lag = right - 1;
+                if lag < layout.min_lag {
+                    continue;
+                }
+                if let Some(mut depth) =
+                    qualifying_valley(&self.normalized, lag, self.config.threshold)
+                {
+                    let mut chosen = lag;
+                    // A weak fundamental can leave a shallow dip at a shorter
+                    // period. Require a tenfold improvement at a supported
+                    // double/triple period, rather than always lowering Hz.
+                    if depth > 0.001 {
+                        let period = interpolate(&self.difference, lag).0;
+                        let end = ((period * 3.0).round() as usize + 3).min(last_lag);
+                        for next in right + 1..=end {
+                            let d = difference_at(&self.centered, comparison_samples, next);
+                            self.difference[next] = d;
+                            sum += d;
+                            self.normalized[next] = if sum > 0.0 {
+                                d * next as f64 / sum
+                            } else {
+                                1.0
+                            };
+                        }
+                        'multiples: for multiple in [2.0, 3.0] {
+                            let center = (period * multiple).round() as usize;
+                            for candidate in center.saturating_sub(2)
+                                ..=center.saturating_add(2).min(end.saturating_sub(1))
+                            {
+                                if candidate > layout.max_lag || candidate < layout.min_lag {
+                                    continue;
+                                }
+                                if let Some(better) =
+                                    qualifying_valley(&self.normalized, candidate, depth * 0.1)
+                                {
+                                    chosen = candidate;
+                                    depth = better;
+                                    break 'multiples;
+                                }
+                            }
+                        }
+                    }
+                    let lag = chosen;
+                    let period = if self.difference[lag]
+                        <= mean_square * comparison_samples as f64 * f64::EPSILON
+                    {
+                        // At numerical zero, prefer the exact observed integer
+                        // repetition over a sub-sample interpolation shift.
+                        lag as f64
+                    } else if lag >= 2 && lag + 2 <= last_lag {
+                        // Spread a low-frequency fit across a fraction of its
+                        // period so adjacent-lag noise does not select the dip.
+                        let stride = (lag / 32).max(1).min(lag / 2).min((last_lag - lag) / 2);
+                        for offset in [
+                            lag - 2 * stride,
+                            lag - stride,
+                            lag + stride,
+                            lag + 2 * stride,
+                        ] {
+                            self.difference[offset] =
+                                difference_at(&self.centered, comparison_samples, offset);
+                        }
+                        refine_period(&self.difference, lag, stride)
+                    } else {
+                        interpolate(&self.difference, lag).0
+                    };
+                    return self.finish(period, depth, sample_rate, rms_metric);
+                }
+            }
+            return Ok(PitchDetection::without_pitch(
+                PitchStatus::LowConfidence,
+                rms_metric,
+            ));
+        }
         difference_function(
             &self.centered,
             layout.samples - last_lag,
@@ -200,39 +309,101 @@ impl YinDetector {
         // Choose the first qualifying valley, not the global minimum at a
         // multiple of the period. No below-threshold valley means uncertainty.
         for lag in layout.min_lag..=layout.max_lag {
-            let value = self.normalized[lag];
-            if value >= self.normalized[lag - 1] || value > self.normalized[lag + 1] {
+            let Some(depth) = qualifying_valley(&self.normalized, lag, self.config.threshold)
+            else {
                 continue;
-            }
-            let (_, depth) = interpolate(&self.normalized, lag);
-            if depth >= self.config.threshold {
-                continue;
-            }
+            };
             // Raw difference interpolation avoids CMNDF's period bias (YIN §II.E).
             let (period, _) = interpolate(&self.difference, lag);
-            let frequency = f64::from(sample_rate) / period;
-            if frequency < self.config.frequency_range.min_hz()
-                || frequency > self.config.frequency_range.max_hz()
-            {
-                return Ok(PitchDetection::without_pitch(
-                    PitchStatus::NoPitch,
-                    rms_metric,
-                ));
-            }
-            return Ok(PitchDetection {
-                pitch: Some(PitchEstimate::new(
-                    frequency,
-                    (1.0 - depth).clamp(0.0, 1.0) as f32,
-                )?),
-                status: PitchStatus::Detected,
-                rms_dbfs: rms_metric,
-            });
+            return self.finish(period, depth, sample_rate, rms_metric);
         }
         Ok(PitchDetection::without_pitch(
             PitchStatus::LowConfidence,
             rms_metric,
         ))
     }
+
+    fn finish(
+        &self,
+        period: f64,
+        depth: f64,
+        sample_rate: u32,
+        rms_metric: Option<f32>,
+    ) -> Result<PitchDetection, CoreError> {
+        let frequency = f64::from(sample_rate) / period;
+        if frequency < self.config.frequency_range.min_hz()
+            || frequency > self.config.frequency_range.max_hz()
+        {
+            return Ok(PitchDetection::without_pitch(
+                PitchStatus::NoPitch,
+                rms_metric,
+            ));
+        }
+        Ok(PitchDetection {
+            pitch: Some(PitchEstimate::new(
+                frequency,
+                (1.0 - depth).clamp(0.0, 1.0) as f32,
+            )?),
+            status: PitchStatus::Detected,
+            rms_dbfs: rms_metric,
+        })
+    }
+}
+
+fn qualifying_valley(values: &[f64], lag: usize, threshold: f64) -> Option<f64> {
+    if values[lag] >= values[lag - 1] || values[lag] > values[lag + 1] {
+        return None;
+    }
+    let depth = interpolate(values, lag).1;
+    (depth < threshold).then_some(depth)
+}
+
+fn difference_at(pcm: &[f64], count: usize, lag: usize) -> f64 {
+    let mut sums = [0.0; 4];
+    let (left, remainder) = pcm[..count].as_chunks::<4>();
+    let (right, shifted_remainder) = pcm[lag..lag + count].as_chunks::<4>();
+    for (a, b) in left.iter().zip(right) {
+        for lane in 0..4 {
+            let delta = a[lane] - b[lane];
+            sums[lane] += delta * delta;
+        }
+    }
+    sums.iter().sum::<f64>()
+        + remainder
+            .iter()
+            .zip(shifted_remainder)
+            .map(|(a, b)| (a - b).powi(2))
+            .sum::<f64>()
+}
+
+/// Five-point quartic interpolation reduces the three-point high-frequency bias.
+/// Newton steps are bounded to the neighborhood; otherwise keep the T06 estimate.
+fn refine_period(values: &[f64], lag: usize, stride: usize) -> f64 {
+    let fallback = interpolate(values, lag).0;
+    let (m2, m1, c, p1, p2) = (
+        values[lag - 2 * stride],
+        values[lag - stride],
+        values[lag],
+        values[lag + stride],
+        values[lag + 2 * stride],
+    );
+    let a1 = (m2 - 8.0 * m1 + 8.0 * p1 - p2) / 12.0;
+    let a2 = (-m2 + 16.0 * m1 - 30.0 * c + 16.0 * p1 - p2) / 24.0;
+    let a3 = (-m2 + 2.0 * m1 - 2.0 * p1 + p2) / 12.0;
+    let a4 = (m2 - 4.0 * m1 + 6.0 * c - 4.0 * p1 + p2) / 24.0;
+    let mut offset = (fallback - lag as f64) / stride as f64;
+    for _ in 0..5 {
+        let slope = a1 + offset * (2.0 * a2 + offset * (3.0 * a3 + offset * 4.0 * a4));
+        let curvature = 2.0 * a2 + offset * (6.0 * a3 + offset * 12.0 * a4);
+        if curvature <= 0.0 || !curvature.is_finite() {
+            return fallback;
+        }
+        offset -= slope / curvature;
+        if !offset.is_finite() || offset.abs() > if stride == 1 { 1.0 } else { 2.0 } {
+            return fallback;
+        }
+    }
+    lag as f64 + offset * stride as f64
 }
 
 fn resize_buffer(buffer: &mut Vec<f64>, len: usize) -> Result<(), CoreError> {
@@ -283,7 +454,36 @@ fn interpolate(values: &[f64], lag: usize) -> (f64, f64) {
 
 #[cfg(test)]
 mod tests {
-    use super::{difference_function, interpolate, normalize_difference};
+    use super::{
+        difference_at, difference_function, interpolate, normalize_difference, refine_period,
+    };
+
+    #[test]
+    fn optimized_sums_match_reference_including_chunk_remainders() {
+        let pcm: Vec<f64> = (0..16).map(|n| f64::from(n * n - 5 * n)).collect();
+        for count in [1, 3, 4, 5, 8, 9] {
+            let mut reference = [0.0; 4];
+            difference_function(&pcm, count, &mut reference);
+            for (lag, expected) in reference.iter().enumerate().skip(1) {
+                assert_eq!(difference_at(&pcm, count, lag), *expected);
+            }
+        }
+    }
+
+    #[test]
+    fn quartic_refinement_finds_known_vertex_at_multiple_strides() {
+        for stride in [1, 2] {
+            let center = 3 * stride;
+            let target = center as f64 + 0.25 * stride as f64;
+            let values: Vec<_> = (0..=6 * stride)
+                .map(|n| {
+                    let x = n as f64 - target;
+                    x * x + 0.001 * x.powi(4)
+                })
+                .collect();
+            assert!((refine_period(&values, center, stride) - target).abs() < 1e-10);
+        }
+    }
 
     #[test]
     fn difference_and_cmndf_match_hand_computed_fixed_span() {

@@ -1,6 +1,6 @@
 # Lyreniq 音律核心与数据契约
 
-日期：2026-11-25（Asia/Shanghai）；T05/T06。实现位于 crates/tuner-core，只有 Rust 标准库依赖，不引用 Tauri、设备或 UI。桌面应用尚未链接此 crate，当前 UI 仍使用 T04 的显式 Demo。
+日期：2026-11-25（Asia/Shanghai）；T05–T07。实现位于 crates/tuner-core，只有 Rust 标准库依赖，不引用 Tauri、设备或 UI。桌面应用尚未链接此 crate，当前 UI 仍使用 T04 的显式 Demo。当前 YIN、平滑和性能详见 [T07 验证](YIN_VALIDATION.md)。
 
 ## 音律计算
 
@@ -58,9 +58,9 @@ test_signal 提供 sine 与 harmonic_tone，返回 Vec<f32>，接受显式采样
 
 夹具测试检查已知正弦样点、44.1/48 kHz 下的周期数、弱基频/强二三次谐波的投影幅度和能量。投影仅用于测试信号质量，不是生产频谱或音高算法。T06 使用此生成器验证 YIN；复杂泛音的检测鲁棒性属于 T07。
 
-## T06 基础 YIN
+## T06 基础 YIN（保留的参考路径）
 
-YinDetector::detect(pcm, actual_sample_rate) 接受归一化的单声道 f32 PCM [-1,1]，频率和累加使用 f64。YinConfig 先验证配置，sample_count(rate) 根据实际采样率给出精确窗口长度；detector 可在调用间换采样率并复用缓冲，不保存历史音高或平滑值。A4 不参与检测，只影响随后音律映射。
+YinDetector::detect(pcm, actual_sample_rate) 接受归一化的单声道 f32 PCM [-1,1]，频率和累加使用 f64。YinConfig 先验证配置，sample_count(rate) 根据实际采样率给出精确窗口长度；detector 可在调用间换采样率并复用缓冲，不保存历史音高或平滑值。A4 不参与检测，只影响随后音律映射。下列步骤及初步误差是 T06 历史记录，现由 detect_reference 保留；当前 detect 的 T07 提前搜索、泛音验证、四次拟合及单独 PitchSmoother 见 YIN_VALIDATION。旧边界问题已在本轮固定夹具上修复。
 
 | 配置/输出 | 约定 |
 |---|---|
@@ -100,4 +100,4 @@ cargo tree -p tuner-core --edges normal --locked
 pwsh -NoProfile -File scripts/test.ps1
 ```
 
-当前核心有 2 项单元 + 25 项集成测试及 2 个可执行文档示例；128 个 MIDI 音符 × 四种 A4 参考值、22 个 YIN 必需频点组合均在单个测试内循环，不额外计成几百个测试。完整实际结果见 [TESTING](TESTING.md)。不需要麦克风即可复现。
+当前核心有 4 项单元 + 33 项集成测试及 2 个可执行文档示例；循环频点/矩阵不额外计成几百个测试。T07 还增加有界固定种子 white_noise 夹具、噪声/衰减/DC 测试与原始值/展示值分离的平滑。完整实际结果见 [TESTING](TESTING.md)，可用 scripts/bench-yin.ps1 重跑误差/性能对照；不需要麦克风。
