@@ -1,0 +1,57 @@
+{
+  "task": "T06",
+  "date": "2026-11-25",
+  "timezone": "Asia/Shanghai",
+  "base_commit": "af37a77a126d4b90e0efede36c1b83b315ffca31",
+  "status": "passed locally for required T06 cases; endpoint limitations recorded",
+  "core": {
+    "unit_tests": 2,
+    "integration_tests": 25,
+    "documentation_tests": 2,
+    "external_dependencies": 0,
+    "actual_sample_rates_hz": [44100, 48000],
+    "window_ms": 300,
+    "amplitude": 0.5,
+    "phase": "zero",
+    "required_frequency_range_hz": [20, 5000],
+    "threshold": 0.1,
+    "min_rms_dbfs": -60,
+    "required_combinations": 22,
+    "required_max_abs_error_cents": 0.053691901,
+    "error_csv": "pure-tone-errors.csv",
+    "accuracy_command": "cargo test -p tuner-core --test yin --locked -- --nocapture --test-threads=1"
+  },
+  "boundary_characterization": {
+    "frequency_range_hz": [19.9, 5100],
+    "rows": 4,
+    "failed_target": "44100 Hz sample rate / 5000 Hz tone: -1.319302299 cents",
+    "default_range_20_hz_status": {"44100": "NoPitch", "48000": "NoPitch"},
+    "default_range_5000_hz_status": {"44100": "Detected", "48000": "Detected"},
+    "full_range_one_cent_verified": false,
+    "follow_up": "T07: endpoint interpolation/range behavior and valid-range decision"
+  },
+  "regression": {
+    "script_shell": "Windows PowerShell 5.1 from D:\\",
+    "scripts": ["check-env", "bootstrap", "test", "build", "test-ui"],
+    "exit_code": 0,
+    "desktop_rust_tests": 2,
+    "frontend_tests": 26,
+    "native_ui_suite": "T04",
+    "native_ui_checks": 16,
+    "native_workspaces": 16,
+    "demo_combinations": 44,
+    "native_window_state": {"visible": false, "focused": false},
+    "normal_exit": {"code": 0, "signal": null},
+    "raw_ui_run": ".local\\ui-smoke\\2026-11-25T09-10-17-677Z",
+    "release": "target/release/lyreniq-desktop.exe",
+    "installer_built": false
+  },
+  "hardware": {
+    "microphone": "user reported absent",
+    "enumeration_performed": false,
+    "capture_verified": false
+  },
+  "unimplemented": ["robustness optimization and smoothing", "FFT", "audio input", "real-time worker", "core/UI bridge", "IPC serialization"],
+  "unverified": ["noise/harmonic/decay detection", "real-time performance budget", "real audio-device accuracy", "native DPI/titlebar", "offline production", "installer"],
+  "current_ci": "Verify current SHA after commit/push; final report and next-task backfill"
+}

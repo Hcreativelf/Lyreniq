@@ -18,7 +18,9 @@ impl fmt::Display for CoreError {
             Self::EmptyTargets => f.write_str("at least one target note is required"),
             Self::InvalidFrame(reason) => write!(f, "invalid pitch frame: {reason}"),
             Self::FixtureTooLarge => f.write_str("test signal exceeds the sample limit"),
-            Self::AllocationFailed => f.write_str("could not allocate the test signal"),
+            Self::AllocationFailed => {
+                f.write_str("could not allocate the sample or analysis buffer")
+            }
         }
     }
 }

@@ -1,5 +1,56 @@
 # Lyreniq 验证记录
 
+## T06 基础 YIN（2026-11-25）
+
+起点 af37a77a126d4b90e0efede36c1b83b315ffca31（T05）。开始干净，安全 fetch 后 ahead/behind=0/0；上轮 [CI run 45554383743](https://github.com/Hcreativelf/Lyreniq/actions/runs/45554383743) 的 test-and-build 及全部步骤经 GitHub 连接器核实 success。此前 SHA/run 对应关系保存在忽略的 .local/logs/T05-ci.json。先复验 17 核心集成 + 1 文档、2 桌面 Rust + 26 TS、release 及 16 工作区/44 Demo 后台组合；原始 UI 运行 .local/ui-smoke/2026-11-25T09-02-16-280Z。
+
+单独 Cargo 首次从 D:\ 调用时未指定清单而返回 101；补上 --manifest-path D:\2-workspace\Lyreniq\Cargo.toml 后退出 0，完整基线回归再通过。不是项目测试失败，也未跳过复验。
+
+| 实际命令 | 结果 |
+|---|---|
+| cargo test -p tuner-core --locked -- --nocapture | 0；2 单元 + 25 集成 + 当时的 1 文档测试；新增 YIN 文档随后单独验证 |
+| cargo clippy -p tuner-core --all-targets --locked -- -D warnings | 0，无警告 |
+| cargo test -p tuner-core --test yin --locked -- --nocapture --test-threads=1 | 0；8 集成测试，stdout 导出 26 行误差数据 |
+| cargo test -p tuner-core --doc --locked | 0；音律及 YIN 两个示例实际编译运行 |
+| cargo tree -p tuner-core --edges normal --locked | 0；仅自身，仍无外部依赖 |
+
+YIN 新增 2 个手算/插值单元测试和 8 个集成测试，覆盖：差分/累计归一化与零分母、抛物线顶点/平坦输入、必需纯音精度、静音/直流/空/短帧不留旧值、RMS 门限、实际时钟与缓冲长度变化、窄频率范围的非整数 lag、未达门限不强制输出、配置/Nyquist/容量错误、NaN/Infinity/越幅 PCM 和边界观察。192 kHz 仅验证窗口几何，不宣称检测精度已测。无实时线程或 DSP/UI 集成。
+
+误差表由测试输出生成，未手填预期值。复现时在根目录初始化工具后执行：
+
+```powershell
+$accuracyLog = '.local/logs/T06-yin-accuracy.log'
+cargo test -p tuner-core --test yin --locked -- --nocapture --test-threads=1 > $accuracyLog
+if ($LASTEXITCODE -ne 0) { throw 'YIN accuracy failed' }
+$rows = @(Get-Content $accuracyLog | Where-Object { $_.Contains('YIN,') } |
+    ForEach-Object { $_.Substring($_.IndexOf('YIN,') + 4) })
+if ($rows.Count -ne 26) { throw 'Unexpected accuracy row count' }
+@('sample_rate_hz,expected_hz,detected_hz,error_cents,confidence,scope') + $rows |
+    Set-Content docs/evidence/T06/pure-tone-errors.csv -Encoding ascii
+```
+
+数据见 [完整 CSV](evidence/T06/pure-tone-errors.csv)，配置与算法见 [TUNING_CORE](TUNING_CORE.md)。普通行使用默认 300 ms/20–5000 Hz/阈值 0.1/−60 dBFS、sine 幅度 0.5、零初相；22 个离散组合全部达到绝对误差 ≤1 cent。循环组合不另计成 22 个测试。
+
+| 合成输入 Hz | 44.1 kHz 误差 cents | 48 kHz 误差 cents |
+|---|---:|---:|
+| 27.5（A0） | −0.000015346 | −0.000007953 |
+| 55（A1） | −0.000089926 | −0.000065847 |
+| 110（A2） | −0.000007859 | +0.000011695 |
+| 123.45 | −0.000089746 | −0.000116142 |
+| 220（A3） | +0.000055465 | +0.000085986 |
+| 261.625565301（C4） | −0.000190702 | +0.000004716 |
+| 432.123 | +0.000280763 | +0.000315424 |
+| 440（A4） | +0.001014435 | +0.000381202 |
+| 442 | −0.001036599 | −0.000631255 |
+| 880（A5） | +0.004829356 | −0.002784191 |
+| 1760（A6） | +0.019948049 | +0.053691901 |
+
+边界行使用 19.9–5100 Hz 范围保留原始插值结果，不能与普通行混为同一配置。20 Hz 两个结果 |error|<0.000001 cent；5000 Hz 分别为 −1.319302299 / −0.959541949 cents，**44.1 kHz/5000 Hz 未达 ±1 cent**。边界测试只约束有限值/有效范围/不夹断，没有以放宽精度断言冒充通过。另执行 cargo test -p tuner-core --test yin --locked boundary_characterization -- --nocapture（退出 0），.local/logs/T06-boundary.log 证实：默认严格范围内 20 Hz 两例均 NoPitch、5000 Hz 两例均 Detected；20 Hz 被拒绝源于极小负插值偏差。本轮未承诺连续频段或全默认范围精度。T07 必须对照这些数据修复或记录有效范围限制，±1 cent 目标保持不变。
+
+完整项目最终验收从 D:\ 用 powershell.exe -NoProfile -File D:\2-workspace\Lyreniq\scripts\<名称>.ps1 依次运行 check-env/bootstrap/test/build/test-ui，五脚本与外层进程均退出 0。test 包含 2 核心单元 + 25 集成 + 2 文档、2 桌面 Rust + 26 TS，以及 fmt/clippy/lint/typecheck/脚本检查；release exe 生成。后台原始运行 .local/ui-smoke/2026-11-25T09-10-17-677Z，16 组检查、16 工作区/44 Demo、真实 IPC、hidden/unfocused、正常关闭/端口释放均通过；这是未改变的 T04 UI 回归，不重复提交截图。详细摘要在 [T06 结果](evidence/T06/result.json)。CI 在本轮 push 后按 SHA 核实，由最终报告给出，下一轮回填。
+
+本机无麦克风为用户报告，本轮未枚举或采集；所有 PCM 仅内存合成、不发声。噪声/衰减/弱基频检测与 CPU 预算留给 T07。原生 DPI/标题栏、真实设备、生产离线与安装仍未验证，既有比例模拟不能代替系统级验收。
+
 ## T05 音律核心、模型与合成夹具（2026-11-25）
 
 起点：`784149b18a36ec51f3a0938460e98b9719cb0768`（T04）。工作区干净，fetch 后 ahead/behind=0/0；[T04 CI run 45405643741](https://github.com/Hcreativelf/Lyreniq/actions/runs/45405643741) 按 SHA 核实 success。先从 D:\ 复跑五个统一脚本，原有 2 Rust + 26 TS、release、16 工作区/44 Demo 后台组合全部通过。

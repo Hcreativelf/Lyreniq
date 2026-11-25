@@ -1,6 +1,6 @@
-//! Device-independent pitch contracts and twelve-tone equal-temperament math.
+//! Device-independent YIN detection, pitch contracts and tuning math.
 //!
-//! No device, desktop, audio playback or pitch-detection implementation lives here.
+//! No device, desktop or audio playback implementation lives here.
 //!
 //! ```
 //! use tuner_core::{MidiNote, TargetSelection, TuningConfig};
@@ -16,6 +16,7 @@ mod error;
 mod model;
 pub mod test_signal;
 mod tuning;
+mod yin;
 
 pub use error::CoreError;
 pub use model::{FrequencyRange, PitchEstimate, PitchFrame, PitchStatus};
@@ -23,3 +24,4 @@ pub use tuning::{
     cents_difference, frequency_to_midi, midi_to_frequency, MidiNote, NoteSpelling,
     TargetSelection, TuningConfig, TuningDirection, TuningResult,
 };
+pub use yin::{PitchDetection, YinConfig, YinDetector, MAX_YIN_WINDOW_SAMPLES};
