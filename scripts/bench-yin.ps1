@@ -43,9 +43,7 @@ try {
         New-Item -ItemType Directory -Path $runDirectory -Force | Out-Null
         $full = Invoke-YinProcess -Arguments '' -OutputPath (Join-Path $runDirectory 'full.csv')
         $engines = [ordered]@{}
-        foreach ($engine in @('T06', 'T07')) {
-            $engines[$engine] = Invoke-YinProcess -Arguments "--benchmark-only --engine $engine" -OutputPath (Join-Path $runDirectory "cpu-$engine.csv")
-        }
+        $engines['DSP2'] = Invoke-YinProcess -Arguments '--benchmark-only' -OutputPath (Join-Path $runDirectory 'cpu-DSP2.csv')
         $metadata = [ordered]@{
             cpu = [Microsoft.Win32.Registry]::GetValue('HKEY_LOCAL_MACHINE\HARDWARE\DESCRIPTION\System\CentralProcessor\0', 'ProcessorNameString', 'unknown')
             logical_processors = [Environment]::ProcessorCount

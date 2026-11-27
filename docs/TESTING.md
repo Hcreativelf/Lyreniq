@@ -1,5 +1,32 @@
 # Lyreniq 验证记录
 
+## P1 — DSP 2.0 核心重构与计划 v2.0（2026-11-27）
+
+起点 `0db1504`（T07），工作区干净，`git fetch origin` 核实 ahead/behind = 0/0。先复跑基线 `cargo test --workspace --locked`（37 核心 + 2 文档 + 2 桌面 Rust 通过），随后按 D018 完成计划 v2.0 修订与 P1 DSP 2.0 核心重构。
+
+| 实际命令/检查 | 结果 |
+|---|---|
+| `cargo fmt --all -- --check` | 退出 0 |
+| `cargo clippy --workspace --all-targets --locked -- -D warnings` | 退出 0，所有目标零警告 |
+| `cargo test -p tuner-core --release --locked` | 退出 0；4 单元 + 43 集成 + 2 文档（共 49 项核心测试），`yin_robustness` 耗时 0.08 s |
+| `cargo run -p tuner-core --example yin_report --release --locked -- --benchmark-only` | 退出 0；实测全部 44.1/48 kHz 场景分位耗时 |
+| `powershell.exe -NoProfile -File scripts/test.ps1` | 退出 0；PS/MJS/Biome、Rust fmt/clippy/test（51 项）、前端 lint/typecheck/test（26 项）全通过 |
+
+实测性能对照（i5-14600KF，Windows x64 Release，48 kHz / 300 ms，64 次测量 + 3 次预热）：
+
+| 场景 | 旧 T06 p95 | 旧 T07 p95 | DSP 2.0 `FastYIN` 300ms p95 | DSP 2.0 `MultiScale` p95 |
+|---|---:|---:|---:|---:|
+| `low_20` (20 Hz) | 11.248 ms | 3.479 ms | 0.133 ms | 0.091 ms |
+| `low_27.5` (A0) | 11.257 ms | 2.501 ms | 0.138 ms | 0.101 ms |
+| `mid_440` (A4) | 11.310 ms | 0.202 ms | 0.156 ms | 0.043 ms |
+| `dominant_second` (弱基频 110 Hz) | 11.341 ms | 0.955 ms | 0.135 ms | 0.037 ms |
+| `noise_only` (纯噪声最坏情况) | 11.411 ms | 3.555 ms | 0.122 ms | 0.110 ms |
+| `Spectrum_4096` (Hann FFT dBFS) | — | — | — | 0.056 ms |
+
+核心测试覆盖：原 T07 640 帧固定矩阵全通过（纯音/泛音 $\le 1$ cent，20/10 dB 达标，0 dB 与静音无误报）；新增非谐性弱基频吉他 E2（$< 5$ cents）、双尺度快速/4x 降采样低音（20–1760 Hz $\le 1$ cent）、FFT 频谱整/非整 bin 校准、窗口加权去 DC、谐波峰值与对数分桶、对数域 `PitchTracker` 中值/自适应 EMA/瞬时 `LowConfidence` 保持、10 种内置乐器预设、零分配 `ToneGenerator` 防爆音闭环与 `serde_json` 契约往返校验。
+
+尚未验证：真实乐器录音（P2 接入 Symphonia 后立即实测）、真机麦克风/WASAPI Loopback（P3）、UI 接入与打包（P5–P8）。
+
 ## T07 YIN 鲁棒性、平滑与性能（2026-11-25）
 
 起点 58830d6536561526af734ee55ecb201a6984225b（T06），开始干净，安全 fetch 后 ahead/behind=0/0。[T06 CI run 45583704093](https://github.com/Hcreativelf/Lyreniq/actions/runs/45583704093) 按 SHA 核实 completed/success。先重跑 cargo test -p tuner-core --locked（从 D:\ 加 --manifest-path）和五个统一脚本：27 核心+2 文档、2 桌面 Rust、26 TS、release、16 工作区/44 Demo 通过；基线 UI .local/ui-smoke/2026-11-25T09-25-15-825Z。

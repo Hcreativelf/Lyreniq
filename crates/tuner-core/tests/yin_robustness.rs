@@ -1,9 +1,10 @@
 #[path = "support/cases.rs"]
 mod cases;
+use std::f64::consts::TAU;
 use tuner_core::{
     cents_difference,
     test_signal::{sine, white_noise},
-    FrequencyRange, PitchStatus, YinConfig, YinDetector,
+    FrequencyRange, MultiScalePitchDetector, PitchStatus, YinConfig, YinDetector,
 };
 
 #[test]
@@ -63,23 +64,71 @@ fn fixed_matrix_handles_harmonics_noise_decay_dc_and_silence() {
 }
 
 #[test]
-fn reference_reproduces_recorded_t06_frequency_values() {
-    let csv = include_str!("../../../docs/evidence/T06/pure-tone-errors.csv");
-    for row in csv.lines().skip(1) {
-        let fields: Vec<_> = row.split(',').collect();
-        let rate = fields[0].parse::<u32>().unwrap();
-        let hz = fields[1].parse::<f64>().unwrap();
-        let recorded = fields[2].parse::<f64>().unwrap();
-        let config = if fields[5] == "required" {
-            YinConfig::default()
-        } else {
-            YinConfig::new(FrequencyRange::new(19.9, 5100.0).unwrap(), 300, 0.1, -60.0).unwrap()
-        };
-        let pcm = sine(rate, hz, 0.5, config.sample_count(rate).unwrap()).unwrap();
-        let result = YinDetector::new(config)
-            .detect_reference(&pcm, rate)
-            .unwrap();
-        assert!((result.pitches()[0].frequency_hz() - recorded).abs() < 2e-9);
+fn inharmonic_string_with_weak_fundamental_avoids_octave_error() {
+    // Stiff-string guitar/piano model: f_n = n * f0 * sqrt(1 + B * n^2) with weak fundamental.
+    let f0 = 82.4068892282175_f64; // E2
+    let stiffness = 0.00025_f64;
+    let harmonics = [(1_u32, 0.08_f64), (2, 0.50), (3, 0.25), (4, 0.12)];
+    for rate in [44_100_u32, 48_000] {
+        let config = YinConfig::default();
+        let n = config.sample_count(rate).unwrap();
+        let pcm: Vec<f32> = (0..n)
+            .map(|i| {
+                let t = i as f64 / f64::from(rate);
+                let sample: f64 = harmonics
+                    .iter()
+                    .map(|&(k, amp)| {
+                        let fk = f64::from(k) * f0 * (1.0 + stiffness * f64::from(k * k)).sqrt();
+                        amp * (TAU * fk * t).sin()
+                    })
+                    .sum();
+                sample as f32
+            })
+            .collect();
+        let result = YinDetector::new(config).detect(&pcm, rate).unwrap();
+        assert_eq!(result.status(), PitchStatus::Detected);
+        let err = cents_difference(result.pitches()[0].frequency_hz(), f0)
+            .unwrap()
+            .abs();
+        assert!(
+            err < 5.0,
+            "inharmonic E2 @ {rate}: detected {:.3} Hz ({err:.2} cents)",
+            result.pitches()[0].frequency_hz()
+        );
+    }
+}
+
+#[test]
+fn multi_scale_detector_locks_fast_mid_high_and_decimated_bass() {
+    for rate in [44_100_u32, 48_000] {
+        let mut detector =
+            MultiScalePitchDetector::new(FrequencyRange::new(19.5, 5000.0).unwrap(), 0.1, -60.0)
+                .unwrap();
+        let fast_n = detector.fast_window_samples(rate).unwrap();
+        let full_n = detector.full_window_samples(rate).unwrap();
+        assert!(fast_n < full_n / 2);
+
+        // Mid/high tones must lock accurately using ONLY the fast ~85 ms window.
+        for hz in [82.406889, 110.0, 261.625565, 440.0, 1760.0] {
+            let pcm = sine(rate, hz, 0.5, fast_n).unwrap();
+            let res = detector.detect(&pcm, rate).unwrap();
+            assert_eq!(res.status(), PitchStatus::Detected, "fast {hz} @ {rate}");
+            let err = cents_difference(res.pitches()[0].frequency_hz(), hz)
+                .unwrap()
+                .abs();
+            assert!(err <= 1.0, "fast {hz} @ {rate}: {err:.4} cents");
+        }
+
+        // Low bass tones below 55 Hz must lock accurately via 4x decimated bass path.
+        for hz in [20.0, 27.5, 30.867706, 41.203445] {
+            let pcm = sine(rate, hz, 0.5, full_n).unwrap();
+            let res = detector.detect(&pcm, rate).unwrap();
+            assert_eq!(res.status(), PitchStatus::Detected, "bass {hz} @ {rate}");
+            let err = cents_difference(res.pitches()[0].frequency_hz(), hz)
+                .unwrap()
+                .abs();
+            assert!(err <= 1.0, "bass {hz} @ {rate}: {err:.4} cents");
+        }
     }
 }
 

@@ -1,10 +1,26 @@
 use crate::{error::positive_finite, CoreError};
+use serde::{Deserialize, Serialize};
 
 // Only resolves floating-point roundoff at equal-distance boundaries (1e-8 cent).
 const MIDI_TIE_EPSILON: f64 = 1e-10;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[serde(try_from = "u8", into = "u8")]
 pub struct MidiNote(u8);
+
+impl From<MidiNote> for u8 {
+    fn from(value: MidiNote) -> Self {
+        value.0
+    }
+}
+
+impl TryFrom<u8> for MidiNote {
+    type Error = CoreError;
+
+    fn try_from(value: u8) -> Result<Self, Self::Error> {
+        Self::new(i32::from(value))
+    }
+}
 
 impl MidiNote {
     pub fn new(number: i32) -> Result<Self, CoreError> {
@@ -39,13 +55,15 @@ impl MidiNote {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub enum NoteSpelling {
     Sharps,
     Flats,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub enum TuningDirection {
     Flat,
     InTune,
@@ -59,9 +77,12 @@ pub enum TargetSelection<'a> {
     Nearest(&'a [MidiNote]),
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct TuningResult {
     midi_note: MidiNote,
+    pitch_class: String,
+    octave: i8,
     note_name: String,
     target_hz: f64,
     cents: f64,
@@ -71,6 +92,12 @@ pub struct TuningResult {
 impl TuningResult {
     pub const fn midi_note(&self) -> MidiNote {
         self.midi_note
+    }
+    pub fn pitch_class(&self) -> &str {
+        &self.pitch_class
+    }
+    pub const fn octave(&self) -> i8 {
+        self.octave
     }
     pub fn note_name(&self) -> &str {
         &self.note_name
@@ -86,7 +113,8 @@ impl TuningResult {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct TuningConfig {
     reference_a4_hz: f64,
     tolerance_cents: f64,
@@ -175,8 +203,12 @@ impl TuningConfig {
         } else {
             TuningDirection::InTune
         };
+        let pitch_class = midi_note.pitch_class(self.spelling).to_string();
+        let octave = midi_note.octave();
         Ok(TuningResult {
             midi_note,
+            pitch_class,
+            octave,
             note_name: midi_note.name(self.spelling),
             target_hz,
             cents,

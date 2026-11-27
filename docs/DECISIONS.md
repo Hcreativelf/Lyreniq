@@ -134,6 +134,17 @@
 - 性能：i5-14600KF/20 逻辑核的 Release 正式测量最坏 p95 3.5552 ms，检测核心满足 33.3 ms 预算；不代替完整 worker/FFT/IPC 的实测。常规 100 ms/50–5000 Hz、低音 300 ms/20–5000 Hz 的调度建议见 YIN_VALIDATION。
 - 影响：保留参数/PCM/内存约束，误差与覆盖率分开报告；不承诺所有乐器、噪声种子或复音。原始报告、CPU 口径、夹具参数与限制均在 YIN_VALIDATION/TESTING。
 
+## D018 — 架构重构与开发计划升级至 v2.0（2026-11-27）
+
+- 决策：保留根目录原始冻结计划书不动（延续 D002），将 `docs/UNIVERSAL_TUNER_DEVELOPMENT_PLAN.md` 正式修订为 v2.0；把原 T08–T25 水平碎片路线重组为 P1–P8 垂直闭环阶段；确立四层架构（`tuner-core` → `audio-io`/`audio-decode` → `tuner-engine` → 极薄 `src-tauri` + React/Canvas UI）；推翻现有时域 `yin.rs` 内核并升级为 DSP 2.0（FFT 加速 Fast YIN + 双尺度窗口 + 谐波辅助 + 对数域 `PitchTracker` + 复用 `SpectrumAnalyzer`）；将 Windows WASAPI Loopback（系统声音内录）纳入 MVP 可选输入源。
+- 原因：T00–T07 完成后仍未打通任何真实音频或文件链路；本机当前无麦克风（D015），若按原顺序先做 T09–T13 将受限于无设备验收；时域 YIN 早停在噪声下会退化回 $O(W \cdot L)$ 且 300 ms 单一窗口导致中高音手感粘滞；缺乏独立应用编排层会导致 `src-tauri` 膨胀；静态 JSON Demo 维护成本过高且不验证真实算法。
+- 替代方案：严格按原 v1.0 T08–T25 顺序继续推进；因结构性返工风险高、端到端验证过晚而被用户否决，本轮已获用户明确批准执行 v2.0 方案。
+- 影响：
+  - `tuner-core` 新增 `rustfft` 与 `serde` 依赖，保留原 T06/T07 的 640 帧合成夹具作为强回归门槛，移除生产公共 API 中的 `detect_reference`。
+  - 文件解码与离线分析提前至 P2，使真实乐器录音可尽早校准 DSP，并可作为 P3 虚拟实时流源端到端验证实时管线。
+  - 后续停止向 Git 提交几十张重复 UI 截图，聚焦自动化测试、回归夹具与少量关键里程碑证据。
+- 验证：P1 完成后通过全部 640 帧回归、频谱测试、PitchTracker 与性能基准，并同步更新 STATUS/HANDOFF/TESTING。
+
 ## 尚未决定
 
 - 项目许可证、正式分发应用标识、Windows 支持范围、安装包签名与分发策略。
