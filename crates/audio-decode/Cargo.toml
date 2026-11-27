@@ -1,0 +1,11 @@
+[package]
+name = "audio-decode"
+version = "0.1.0"
+description = "Streaming local WAV, FLAC and MP3 decoder for Lyreniq"
+edition = "2021"
+rust-version = "1.100"
+publish = false
+
+[dependencies]
+serde = { version = "=1.0.229", features = ["derive"] }
+symphonia = { version = "=0.5.5", default-features = false, features = ["wav", "pcm", "adpcm", "flac", "mp3", "opt-simd"] }

@@ -145,6 +145,12 @@
   - 后续停止向 Git 提交几十张重复 UI 截图，聚焦自动化测试、回归夹具与少量关键里程碑证据。
 - 验证：P1 完成后通过全部 640 帧回归、频谱测试、PitchTracker 与性能基准，并同步更新 STATUS/HANDOFF/TESTING。
 
+## D019 — P2 流式解码与离线分析引擎选型（2026-11-27）
+
+- 决策：新增 `crates/audio-decode`（精确锁定 `symphonia = "=0.5.5"`，仅启用 `wav` / `pcm` / `adpcm` / `flac` / `mp3` / `opt-simd`，许可 MPL-2.0）与 `crates/tuner-engine`（平台无关应用编排层），均强制 `#![forbid(unsafe_code)]`。在 `tests/fixtures/` 保存 3 个完全合成、无版权风险的 1 秒测试音频夹具（`tone_440_48k.wav`、`tone_440_44k1.flac`、`tone_440_48k.mp3`）。
+- 原因：Symphonia 0.5.5 API 成熟稳定且零原生 C/FFmpeg 运行时依赖，支持跨平台与未来 WASM；限制 feature 列表避免引入无关容器/编解码器；在解码层统一做有限值/[-1,1] 保护（防止有损 MP3 帧间峰值超过 ±1.0 触发 DSP 报错）、内容探测回退（处理错扩展名）与双声道反相抵消检测；通过 `tuner-engine` 隔离恒定内存滑窗分析、取消/进度、统计摘要与 CSV 导出，保持 `src-tauri` 极薄。
+- 验证：`audio-decode` 3 项集成测试 + `tuner-engine` 5 项集成测试（含 WAV/FLAC/MP3 三格式、分段静音、原子取消、Unicode 路径 CSV 导出与 60 秒长流式回归）及全工作区 `scripts/test.ps1` 全部通过。
+
 ## 尚未决定
 
 - 项目许可证、正式分发应用标识、Windows 支持范围、安装包签名与分发策略。

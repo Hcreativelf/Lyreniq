@@ -1,5 +1,18 @@
 # Lyreniq 验证记录
 
+## P2 — 流式解码与离线文件分析引擎（2026-11-27）
+
+起点 `908ecc72e5e33e425d23b059db8395905784ee88`（P1），工作区干净。新增 `crates/audio-decode`（`symphonia = "=0.5.5"`）、`crates/tuner-engine` 与 `tests/fixtures/` 三格式合成测试夹具。
+
+| 实际命令/检查 | 结果 |
+|---|---|
+| `cargo run -p audio-decode --example gen_fixtures --locked` | 退出 0；生成 `tone_440_48k.wav`（96,044 B）与 `tone_440_44k1.flac`（88,343 B） |
+| Windows WinRT `MediaTranscoder` | 退出 0；从 `tone_440_48k.wav` 本地生成 `tone_440_48k.mp3`（23,471 B） |
+| `cargo test -p audio-decode -p tuner-engine --release --locked` | 退出 0；3 项解码 + 5 项离线分析全通过，含 60 秒 44.1 kHz 长流式回归总耗时 0.06 s |
+| `powershell.exe -NoProfile -File scripts/test.ps1` | 退出 0；PS/MJS/Biome、Rust fmt/clippy、59 项 Rust 测试 + 26 项前端 TS 测试全通过 |
+
+覆盖场景：WAV/FLAC/MP3 元数据与采样率/有损标志；WAV/FLAC 中位音分偏差 $\le 1$ cent、MP3 $\le 2$ cents；声道选择与双声道反相抵消告警；错扩展名内容回退；截断/损坏/缺失文件无崩溃；分段旋律静音断层与统计诚实性；开始前与流式途中原子取消；A4=442 Hz 校准不改物理频率；CSV 元数据头、无路径泄漏与中文文件名写入；60 秒长文件流式有界滑窗分析。
+
 ## P1 — DSP 2.0 核心重构与计划 v2.0（2026-11-27）
 
 起点 `0db1504`（T07），工作区干净，`git fetch origin` 核实 ahead/behind = 0/0。先复跑基线 `cargo test --workspace --locked`（37 核心 + 2 文档 + 2 桌面 Rust 通过），随后按 D018 完成计划 v2.0 修订与 P1 DSP 2.0 核心重构。

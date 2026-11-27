@@ -1,0 +1,15 @@
+[package]
+name = "tuner-engine"
+version = "0.1.0"
+description = "Platform-independent analysis, session orchestration and export engine for Lyreniq"
+edition = "2021"
+rust-version = "1.100"
+publish = false
+
+[dependencies]
+audio-decode = { path = "../audio-decode" }
+serde = { version = "=1.0.229", features = ["derive"] }
+tuner-core = { path = "../tuner-core" }
+
+[dev-dependencies]
+serde_json = "=1.0.154"

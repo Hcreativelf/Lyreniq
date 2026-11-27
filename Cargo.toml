@@ -1,3 +1,8 @@
 [workspace]
-members = ["apps/desktop/src-tauri", "crates/tuner-core"]
+members = [
+    "apps/desktop/src-tauri",
+    "crates/tuner-core",
+    "crates/audio-decode",
+    "crates/tuner-engine",
+]
 resolver = "2"
